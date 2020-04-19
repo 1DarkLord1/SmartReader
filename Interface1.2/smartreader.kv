@@ -1,0 +1,206 @@
+<BackgroundColor@Widget>
+    background_color: 1, 1, 1, 1
+    canvas.before:
+        Color:
+            rgba: root.background_color
+        Rectangle:
+            size: self.size
+            pos: self.pos
+
+<BackgroundLabel@Label+BackgroundColor>
+    color: [0,0,0,1]
+    background_color: 1, 1, 1, 1
+
+<ScaleLabel@Label>:
+    _scale: 1. if self.texture_size[0] < self.width else float(self.width) / self.texture_size[0]
+    canvas.before:
+        PushMatrix
+        Scale:
+            origin: self.center
+            x: self._scale or 1.
+            y: self._scale or 1.
+    canvas.after:
+        PopMatrix
+
+
+
+
+
+<VolumePopup>:
+    volume: slider_id.value
+    size_hint: (0.3, 0.1)
+    pos_hint: {'right': 1, 'top': 1}
+    title: "  Volume: " + str(slider_id.value)
+    Slider:
+        min: 0
+        max: 100
+        step: 1
+        value: 100
+        id: slider_id
+
+<GoToAudio>:
+    func: 0
+    size_hint: (0.15, 0.15)
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+    title: ''
+    Button:
+        text: 'Go to Audio'
+        on_release:
+            root.go_to_audio()
+
+
+
+
+<Container>:
+    left_page: left_page
+    right_page: right_page
+    music_button: music_button
+    slider: slider
+    time: time
+
+    orientation: 'vertical'
+    BoxLayout:
+        size_hint: 1, 0.04
+
+        Button:
+            text: 'File'
+
+        Button:
+            text: 'View'
+
+        Button:
+            text: 'Navigation'
+
+        Button:
+            text: 'Bookmarks'
+
+
+    BoxLayout:
+        size_hint: 1, 0.04
+        Button:
+            text: '<-'
+            on_release:
+                root.change_text_l()
+        Button:
+            text: '->'
+            on_release:
+                root.change_text_r()
+
+        Button:
+            text: 'Add new bookmark'
+
+        Button:
+            text: '+'
+
+        Button:
+            text: '-'
+
+        Button:
+            text: 'Night mode'
+
+    BoxLayout:
+        size_hint: 1, 0.04
+        Button:
+            size_hint: 0.4, 1
+            text: '<<'
+            on_release:
+                root.prev_audio()
+
+
+        ToggleButton:
+            id: music_button
+            size_hint: 0.4, 1
+            text:'play'
+            on_press:
+                root.play_or_stop()
+
+
+        Button:
+            size_hint: 0.4, 1
+            text: '>>'
+            on_release:
+                root.next_audio()
+
+        ScaleLabel:
+            id: time
+            size_hint: 0.2, 1
+            text:
+                root.get_audio_len()
+
+
+        Slider:
+            id: slider
+            size_hint: 1.5, 1
+            min: 0
+            max: 100
+            step: 1
+            value:
+                root.move_slider()
+
+            on_touch_up:
+                root.move_pos_audio(self.value)
+
+
+
+
+        Button:
+            size_hint: 0.5, 1
+            text: 'Volume'
+            on_release:
+                root.volume_slider_open()
+
+
+        Button:
+            size_hint: 0.5, 1
+            text: 'Go to book'
+            on_release:
+                root.go_to_book()
+
+    BoxLayout:
+        canvas:
+            Color:
+                rgb: 1, 1, 1
+            Rectangle:
+                size: self.size
+
+
+
+        BackgroundLabel:
+            id: left_page
+            markup: True
+            text:
+                root.set_text_l()
+            on_ref_press:
+                root.ref_press(*args)
+            text_size: self.size
+            halign: 'left'
+            valign: 'top'
+            padding: (10,10)
+
+        BackgroundLabel:
+            background_color: 0, 0, 0, 1
+            size_hint: 0.01, 1
+
+
+
+        BackgroundLabel:
+            id: right_page
+            markup: True
+            text:
+                root.set_text_r()
+            on_ref_press:
+                root.ref_press(*args)
+            text_size: self.size
+            halign: 'left'
+            valign: 'top'
+            padding: (10,10)
+
+
+
+
+
+
+
+
+
+
