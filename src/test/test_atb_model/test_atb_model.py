@@ -66,5 +66,16 @@ class test_atb_model(unittest.TestCase):
         self.assertEqual(mdl.get_word_list()[:len(correct_word_list)], correct_word_list)
 
 
+    def test_book1_get_text(self):
+        mdl = Model()
+        dir = os.path.join(os.getcwd(), 'test_files', 'book1_data.atb')
+        mdl.load(dir)
+        correct_text = 'Дж. К. Ролинг\nГарри Поттер и философский камень\n\nГлава 1\nМальчик, который выжил\n\nМистер и миссис Дурсль проживали'+\
+        ' в доме номер четыре по Тисовой улице и всегда с гордостью заявляли, что они, слава богу, абсолютно нормальные люди.'+\
+         ' Уж от кого-кого, а от них никак нельзя было ожидать, чтобы они попали'
+        correct_text = correct_text.decode('utf-8')
+        self.assertEqual(mdl.get_text()[:len(correct_text)], correct_text)
+
+
 if __name__ == '__main__':
     unittest.main()

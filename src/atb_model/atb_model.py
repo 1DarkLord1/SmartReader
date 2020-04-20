@@ -13,7 +13,7 @@ class Model:
 
 
     def __get_fb2_root(self, fb2_path):
-        fb2_tree = etree.parse(fb2_path)
+        fb2_tree = etree.parse(fb2_path, etree.XMLParser(remove_blank_text=True))
         fb2_root = fb2_tree.getroot()
         for elem in fb2_root.getiterator():
             elem.tag = etree.QName(elem).localname
@@ -23,9 +23,9 @@ class Model:
 
     def __fb2_text_parse(self, fb2_path):
         fb2_root = self.__get_fb2_root(fb2_path)
-        text = etree.tostring(fb2_root.find('body'), encoding='utf-8').decode('utf-8')
+        raw_text = etree.tostring(fb2_root.find('body'), encoding='utf-8').decode('utf-8')
         repl_cltag = '#~?$'
-        book_text = re.sub('<.*?>', '', re.sub('</.*?>', repl_cltag, text)).replace(repl_cltag, '\n')
+        book_text = re.sub('<.*?>', '', re.sub('</.*?>', repl_cltag, raw_text)).replace(repl_cltag, '\n')
         return book_text
 
 
