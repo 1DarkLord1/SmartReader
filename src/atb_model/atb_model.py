@@ -67,3 +67,11 @@ class Model:
 
     def get_word_list(self):
         return self.word_list
+
+
+    def get_sec(self, word_num):
+        return 0
+
+
+    def get_word_num(self, sec):
+        return 0
