@@ -1,17 +1,9 @@
-import kivy
 from kivy.app import App
-from kivy.uix.button import Button
-from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
-from kivy.core.window import Window
-from kivy.uix.slider import Slider
-from kivy.properties import ObjectProperty
-from kivy.uix.togglebutton import ToggleButton
 from kivy.core.audio import SoundLoader, Sound
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
-import atb_model
-from atb_model import Model
+from libs.atb_model.atb_model import Model
 
 
 # Window.size = (1920, 1080)
@@ -225,3 +217,4 @@ class SmartReaderApp(App):
 
 if __name__ == '__main__':
     SmartReaderApp().run()
+
