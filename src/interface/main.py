@@ -3,7 +3,9 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.core.audio import SoundLoader, Sound
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
-from libs.atb_model.atb_model import Model
+import sys
+sys.path.insert(0, "../libs/atb_model")
+from atb_model import Model
 
 
 # Window.size = (1920, 1080)
@@ -13,7 +15,7 @@ class Container(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.atb_model = Model()
-        self.atb_model.load("book1_data.atb")
+        self.atb_model.load("../test/test_files/example_atb/book1_data.atb")
         self.last_words = []
         self.pages = self.slice_pages(self.atb_model.get_text(), 100, 50)
         self.cur_page = 0
@@ -91,7 +93,6 @@ class Container(BoxLayout):
         self.audio_file.sound.volume = value / 100
 
     def ref_press(self, instance, ref):
-        print(ref)
         self.cur_ref = self.ref_to_word_num(ref)
         self.go_to_audio_popup.open()
 
@@ -123,8 +124,8 @@ class Container(BoxLayout):
 
     def go_to_pos_audio(self, instance, value):
         pos = self.atb_model.get_sec(self.cur_ref)
-        self.audio_file = self.Music(self.play_list[pos[0]])
-        self.audio_file.sound.seek(pos[1])
+        self.audio_file = self.Music(self.play_list[pos])
+        self.audio_file.sound.seek(pos)
         self.time.text = self.get_audio_len()
 
     def my_callback(self, dt):
