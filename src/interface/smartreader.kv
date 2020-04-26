@@ -23,9 +23,6 @@
         PopMatrix
 
 
-
-
-
 <VolumePopup>:
     volume: slider_id.value
     size_hint: (0.3, 0.1)
@@ -39,16 +36,72 @@
         id: slider_id
 
 <GoToAudio>:
-    func: 0
-    size_hint: (0.15, 0.15)
-    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-    title: ''
     Button:
         text: 'Go to Audio'
         on_release:
-            root.go_to_audio()
+            root.func()
 
+<ChooseFile>:
+    select_button: select_button
+    filechooser: filechooser
+    canvas.before:
+        Color:
+            rgba: 0, 0, .4, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserIconView:
+            id: filechooser
+            path:
+                root.get_path()
 
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                background_color: 0,.5,1,1
+                on_release: root.cancel()
+
+            Button:
+                id: select_button
+                text: "Select Folder"
+                background_color: 0,.5,1,1
+                on_release: root.select(filechooser.path, filechooser.selection)
+
+<FileDialog>:
+    Button:
+        background_color: 0,.5,1,1
+        text: 'Import book'
+        on_release: root.import_book()
+    Button:
+        background_color: 0,.5,1,1
+        text: 'Open atb file'
+        on_release: root.open_atb()
+
+<MessagePopup>:
+    msg: msg
+    Button:
+        id: msg
+        background_color: 0,.5,1,1
+        on_release: root.close()
+
+<LoadingBar>:
+    #loadbar: loadbar
+    pb: pb
+    orientation: 'vertical'
+
+    ProgressBar:
+        id: pb
+        min :0
+        max :100
+        #size_hint_x :.8
+        #size_hint_y :.5
+        value: 0
 
 
 <Container>:
@@ -65,7 +118,8 @@
 
         Button:
             text: 'File'
-
+            on_release:
+                root.open_file_dialog()
         Button:
             text: 'View'
 
@@ -125,6 +179,7 @@
         ScaleLabel:
             id: time
             size_hint: 0.2, 1
+            text: '00:00/00:00'
 
 
 
@@ -134,9 +189,6 @@
             min: 0
             max: 100
             step: 1
-            value:
-                root.move_slider()
-
             on_touch_up:
                 root.move_pos_audio(self.value)
 
@@ -168,8 +220,8 @@
         BackgroundLabel:
             id: left_page
             markup: True
-            #text:
-                #root.set_text_l()
+            text: 'Hello! This is SmartReader\nPress File button to import new book or open atb file'
+
 
             on_ref_press:
                 root.ref_press(*args)
@@ -187,16 +239,12 @@
         BackgroundLabel:
             id: right_page
             markup: True
-            #text:
-             #   root.set_text_r()
             on_ref_press:
                 root.ref_press(*args)
             text_size: self.size
             halign: 'left'
             valign: 'top'
             padding: (10,10)
-
-
 
 
 
