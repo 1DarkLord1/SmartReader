@@ -12,7 +12,7 @@ class ATMapper:
 
 
     def recognize(self, audio_path, dur, chunk_time=5):
-        recognized_words = []
+        recognized_chunks = []
         rec = sr.Recognizer()
         audio = sr.AudioFile(audio_path)
         with audio as source:
@@ -21,7 +21,7 @@ class ATMapper:
                 chunk_words = rec.recognize_google(recorded, language="ru-RU", duration=chunk_time).split(' ')
                 recognized_words.append(namedtuple('Chunk', ['text', 'tstart', 'tend'])
                 (chunk_words, time, time + min(dur - time, chunk_time)))
-        return recognized_words
+        return recognized_chunks
 
 
     def calc_levenshtein(self, first, second, i, j, dist):
@@ -31,7 +31,7 @@ class ATMapper:
             return
         else:
             self.calc_levenshtein(first, second, i - 1, j, dist)
-            self.calc_levenshtein(firt, second, i, j - 1, dist)
+            self.calc_levenshtein(first, second, i, j - 1, dist)
             dist[i][j] = min(min(dist[i - 1][j], dist[i][j - 1]) + 1, dist[i - 1][j - 1] + first[i] != second[j])
 
 
@@ -50,7 +50,18 @@ class ATMapper:
     def chunk_search(self, chunk, begin, end):
         end = end - len(chunk) + 1
         matches = [(i, self.average_metrics(chunk, words[i:i + len(chunk)])) for i in range(begin, end)]
-        return min(poses, key=lambda matches: matches[1])[0]
+        return min(poses, key=lambda match: match[1])[0]
 
 
-    
+    def map_words(self):
+        markup = []
+        pos = 0
+        for audio_path, dur in zip(self.audio_paths, self.durs):
+            chunks = self.recognize(audio_path, dur)
+            if chunks.text = '':
+                continue
+            cur_markup = []
+            for chunk in chunks:
+                chunk_pos = self.chunk_search(chunk.text, pos, min(pos + 8 * len(chunk), len(words)))
+                cur_markup.append(namedtuple('Markup', ['tstart', 'tend' 'num'])(chunk.tstart, chunk.tend, chunk_pos))
+                pos = chunk_pos + len(chunk)
