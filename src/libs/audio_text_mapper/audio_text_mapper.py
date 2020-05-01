@@ -2,24 +2,26 @@
 
 from collections import namedtuple
 import speech_recognition as sr
+from statistics import mean
 
 class ATMapper:
-    def __init__(self, path, dur):
-        self.path = path
-        self.dur = dur
+    def __init__(self, words, audio_paths, durs):
+        self.audio_paths = audio_paths
+        self.durs = durs
+        self.words = words
 
 
-    def recognize(self):
-        recognized_text = []
-        chunk_time = 5
+    def recognize(self, audio_path, dur, chunk_time=5):
+        recognized_words = []
         rec = sr.Recognizer()
-        audio = sr.AudioFile(self.path)
+        audio = sr.AudioFile(audio_path)
         with audio as source:
             recorded = rec.record(source)
-            for time in range(0, self.dur, chunk_time)
-                recognized_text.append(namedtuple('Chunk', ['text', 'dur'])
-                (rec.recognize_google(recorded, language="ru-RU", duration=chunk_time), time))
-        return recognized_text
+            for time in range(0, dur, chunk_time)
+                chunk_words = rec.recognize_google(recorded, language="ru-RU", duration=chunk_time).split(' ')
+                recognized_words.append(namedtuple('Chunk', ['text', 'tstart', 'tend'])
+                (chunk_words, time, time + min(dur - time, chunk_time)))
+        return recognized_words
 
 
     def calc_levenshtein(self, first, second, i, j, dist):
@@ -41,5 +43,14 @@ class ATMapper:
         return dist[len(first) - 1][len(second) - 1]
 
 
-    def chunk_search(self):
-        pass
+    def average_metrics(self, chunk, text_words):
+        return mean([self.levenshtein_metrics(chunk_word, text_word) for chunk_word, text_word in zip(chunk, text_words)
+
+
+    def chunk_search(self, chunk, begin, end):
+        end = end - len(chunk) + 1
+        matches = [(i, self.average_metrics(chunk, words[i:i + len(chunk)])) for i in range(begin, end)]
+        return min(poses, key=lambda matches: matches[1])[0]
+
+
+    
