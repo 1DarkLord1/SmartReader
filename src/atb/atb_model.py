@@ -50,6 +50,9 @@ class Model:
     def save(self, path):
         self.tree.write(path, pretty_print=True)
 
+    def make_atb(self, path_fb2, mp3list):
+        pass
+
     def get_audio_list(self):
         return self.audio_list
 
@@ -63,4 +66,4 @@ class Model:
         return [0, 0]
 
     def get_word_num(self, sec):
-        return 745
+        return 243

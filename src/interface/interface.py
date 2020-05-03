@@ -1,13 +1,28 @@
 import os
 from os import listdir
 from kivy.uix.boxlayout import BoxLayout
+from kivy.core.window import Window
 from kivy.core.audio import SoundLoader, Sound
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ObjectProperty
+from kivymd.app import MDApp
+
 from atb.atb_model import Model
 from kivy.app import App
+from kivymd.toast import toast
+from kivymd.uix.button import MDRectangleFlatButton, MDRaisedButton, MDRectangleFlatIconButton, MDIconButton, \
+    MDFlatButton
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.slider import MDSlider
+from kivymd.uix.label import MDLabel
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.floatlayout import MDFloatLayout
+from kivy.utils import get_color_from_hex
+from kivymd.color_definitions import colors
+from kivymd.uix.filemanager import MDFileManager
 
 
 class Container(BoxLayout):
@@ -30,6 +45,9 @@ class Container(BoxLayout):
         def get_path():
             return os.path.abspath(os.curdir)
 
+        def get_color(self, name, num):
+            return get_color_from_hex(colors[name][num])
+
     class FileDialog(BoxLayout):
         import_book = ObjectProperty(None)
         open_atb = ObjectProperty(None)
@@ -41,8 +59,9 @@ class Container(BoxLayout):
         close = ObjectProperty(None)
         func = ObjectProperty(None)
 
-    class GoToAudio(BoxLayout):
+    class GoToAudio(FloatLayout):
         func = ObjectProperty(None)
+        color = ObjectProperty(None)
 
     class Slicer:
         def __init__(self, p1, p2):
@@ -67,6 +86,7 @@ class Container(BoxLayout):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.flag = True
         self.is_load = False
         self.atb_model = None
         self.last_words = None
@@ -79,18 +99,38 @@ class Container(BoxLayout):
         self.cur_ref = None
         self.vol_popup = self.VolumePopup()
         self.vol_popup.bind(volume=self.change_volume)
-        self.go_to_audio_popup = Popup(title="", content=self.GoToAudio(func=self.go_to_pos_audio),
-                                       size_hint=(0.15, 0.15))
+        self.vol_popup.separator_color = [0, 0, 0, 1]
+        self.vol_popup.background = '../images/back.jpg'
+        self.vol_popup.title_color = [0, 0, 0, 1]
+        self.go_to_audio_popup = Popup(title="",
+                                       content=self.GoToAudio(func=self.go_to_pos_audio, color=self.get_color),
+                                       size_hint=(0.15, 0.15), separator_color=[0, 0, 0, 1], title_size='0')
         self.file_popup = None
-        self.file_dialog = Popup(title="File", content=self.FileDialog(import_book=self.import_book,
-                                                                       open_atb=self.open_atb_file),
-                                 size_hint=(0.4, 0.2))
+
         self.msg_popup = None
         self.loading_popup = Popup(title="Loading", content=self.LoadingBar(close=self.close_loading_bar,
                                                                             func=self.make_atb),
                                    size_hint=(0.4, 0.15))
         self.move_slider()
         self.update_bar_trigger = Clock.create_trigger(self.update_bar)
+        menu_items = [{"icon": "git", "text": f"Import book"}, {"icon": "git", "text": f"Open atb"}]
+        self.menu = MDDropdownMenu(
+            caller=self.file_btn,
+            items=menu_items,
+            position="auto",
+            callback=self.set_item,
+            width_mult=4,
+        )
+        Clock.schedule_interval(self.menu.set_menu_properties, 0.1)
+        self.dialog = None
+        self.cur_volume = 100
+        self.night_mode_on = False
+
+    def set_item(self, instance):
+        if instance.text == 'Open atb':
+            self.open_atb_file()
+        else:
+            self.import_book()
 
     def change_text_r(self):
         if self.is_load:
@@ -113,14 +153,16 @@ class Container(BoxLayout):
 
     def play_or_stop(self):
         if self.is_load:
-            if self.music_button.state == 'down':
-                self.music_button.text = "Stop"
+            if self.flag:
                 if self.audio_file.sound:
                     self.audio_file.sound.play()
+                    self.music_button.icon = 'pause-circle-outline'
+                    self.flag = False
             else:
-                self.music_button.text = "Play"
                 if self.audio_file.sound:
                     self.audio_file.sound.stop()
+                    self.music_button.icon = 'play-circle-outline'
+                    self.flag = True
 
     def move_pos_audio(self, value):
         if self.is_load:
@@ -153,6 +195,15 @@ class Container(BoxLayout):
         self.vol_popup.open()
 
     def change_volume(self, instance, value):
+        self.cur_volume = value
+        if value == 0:
+            self.volume_btn.icon = 'volume-mute'
+        if 0 < value < 33:
+            self.volume_btn.icon = 'volume-low'
+        if 33 <= value < 66:
+            self.volume_btn.icon = 'volume-medium'
+        if 66 <= value <= 100:
+            self.volume_btn.icon = 'volume-high'
         if self.is_load:
             self.audio_file.sound.volume = value / 100
 
@@ -185,27 +236,27 @@ class Container(BoxLayout):
         self.audio_file.sound.seek(pos[1])
         self.time.text = self.get_audio_len()
 
-    def open_file_dialog(self):
-        self.file_dialog.open()
-
     def import_book(self):
         self.file_popup = Popup(title="Select .fb2 file", content=self.ChooseFile(select=self.select_fb2_mp3,
                                                                                   cancel=self.dismiss_popup, ),
-                                size_hint=(0.5, 0.6))
+                                size_hint=(0.5, 0.6), background='../images/back.jpg', title_color=[0, 0, 0, 1],
+                                title_align='center')
         self.file_popup.content.select_button.text = 'Select .fb2 file'
         self.file_popup.open()
+        self.menu.dismiss()
 
     def open_atb_file(self):
         self.file_popup = Popup(title="Select .atb file", content=self.ChooseFile(select=self.select_atb,
                                                                                   cancel=self.dismiss_popup, ),
-                                size_hint=(0.5, 0.6))
+                                size_hint=(0.5, 0.6), background='../images/back.jpg', title_color=[0, 0, 0, 1],
+                                title_align='center')
         self.file_popup.content.select_button.text = 'Select .atb file'
         self.file_popup.open()
+        self.menu.dismiss()
 
     def select_atb(self, path, selection):
         if selection and selection[0].endswith('.atb'):
             self.dismiss_popup()
-            self.file_dialog.dismiss()
             self.import_atb(selection[0])
         else:
             self.show_msg('This is not .atb file')
@@ -234,7 +285,6 @@ class Container(BoxLayout):
                     for i in range(len(mp3s)):
                         mp3s[i] = path + '/' + mp3s[i]
                     self.dismiss_popup()
-                    self.file_dialog.dismiss()
                     self.loading_popup.open()
                     self.make_atb(self.file_popup.content.fb2_path, mp3s)
             else:
@@ -257,7 +307,7 @@ class Container(BoxLayout):
         self.atb_model = Model()
         self.atb_model.load(path)
         self.last_words = []
-        self.pages = self.slice_pages(self.atb_model.get_text(), 100, 50)
+        self.pages = self.slice_pages(self.atb_model.get_text(), 100, 46)
         self.cur_page = 0
         if len(self.pages) > 0:
             self.left_page.text = self.pages[0]
@@ -265,15 +315,32 @@ class Container(BoxLayout):
             self.right_page.text = self.pages[1]
         self.play_list = self.atb_model.get_audio_list()
         self.audio_file = self.Music(self.play_list[0])
+        self.audio_file.sound.volume = self.cur_volume / 100
         self.cur_audio = 0
         self.audio_len = ""
         self.time.text = self.get_audio_len()
         self.cur_ref = 0
 
+    def night_mode(self):
+        if not self.night_mode_on:
+            self.left_page.background_color = self.get_color('Gray', '800')
+            self.left_page.color = [1, 1, 1, 1]
+            self.right_page.background_color = self.get_color('Gray', '800')
+            self.right_page.color = [1, 1, 1, 1]
+            self.night_mode_on = True
+        else:
+            self.left_page.background_color = [1, 1, 1, 1]
+            self.left_page.color = [0, 0, 0, 1]
+            self.right_page.background_color = [1, 1, 1, 1]
+            self.right_page.color = [0, 0, 0, 1]
+            self.night_mode_on = False
+
+
+
     def clean_word(self, ind):
         if self.pages[ind].find('[/color]') != -1:
-            self.pages[ind] = self.pages[ind].replace('[/color]', '')
-            self.pages[ind] = self.pages[ind].replace('[color=ff0000]', '')
+            self.pages[ind] = self.pages[ind].replace('[/color][/b]', '')
+            self.pages[ind] = self.pages[ind].replace('[b][color=ff0000]', '')
             if ind % 2 == 0:
                 self.left_page.text = self.pages[ind]
             else:
@@ -294,9 +361,9 @@ class Container(BoxLayout):
 
     def mark_word(self, ind, word_num):
         pos = self.pages[ind].find('[ref={}]'.format(word_num))
-        tmp_str = self.pages[ind][pos:].replace('[/ref]', '[/color][/ref]', 1)
+        tmp_str = self.pages[ind][pos:].replace('[/ref]', '[/color][/b][/ref]', 1)
         page = self.pages[ind][0:pos] + tmp_str
-        self.pages[ind] = page.replace('[ref={}]'.format(word_num), '[ref={}][color=ff0000]'.format(word_num))
+        self.pages[ind] = page.replace('[ref={}]'.format(word_num), '[ref={}][b][color=ff0000]'.format(word_num))
 
     def timer_callback(self, dt):
         if self.is_load:
@@ -348,21 +415,26 @@ class Container(BoxLayout):
         self.file_popup.dismiss()
 
     def show_msg(self, msg):
-        self.msg_popup = Popup(title="Error", content=self.MessagePopup(close=self.close_msg),
-                               size_hint=(0.2, 0.2))
-        self.msg_popup.content.msg.text = msg
-        self.msg_popup.open()
+        self.dialog = MDDialog(
+            title=msg,
+            buttons=[
+                MDRaisedButton(
+                    text="OK",
+                    on_release=self.close_dialog
+                ),
+            ],
+        )
+        self.dialog.open()
 
-    def close_msg(self):
-        self.msg_popup.dismiss()
+    def close_dialog(self, instance):
+        self.dialog.dismiss()
 
     def close_loading_bar(self):
         self.loading_popup.dismiss()
 
-
-class SmartReaderApp(App):
-    def build(self):
-        return Container()
+    @staticmethod
+    def get_color(name, num):
+        return get_color_from_hex(colors[name][num])
 
 
 
