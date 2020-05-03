@@ -9,6 +9,8 @@ class ATMapper:
         self.audio_paths = audio_paths
         self.durs = durs
         self.words = words
+        self.word_sec = None
+        self.sec_word = None
 
 
     def recognize(self, audio_path, dur, chunk_time=5):
@@ -40,7 +42,7 @@ class ATMapper:
         second = ' ' + second
         dist = [[None for i in range(len(first))] for i in range(len(second))]
         self.calc_levenshtein(first, second, 0, 0, dist)
-        return dist[len(first) - 1][len(second) - 1]
+        return dist[-1][-1]
 
 
     def average_metrics(self, chunk, text_words):
@@ -54,14 +56,34 @@ class ATMapper:
 
 
     def map_words(self):
+        deep_coef = 8
         markup = []
         pos = 0
         for audio_path, dur in zip(self.audio_paths, self.durs):
             chunks = self.recognize(audio_path, dur)
-            if chunks.text = '':
-                continue
-            cur_markup = []
             for chunk in chunks:
-                chunk_pos = self.chunk_search(chunk.text, pos, min(pos + 8 * len(chunk), len(words)))
-                cur_markup.append(namedtuple('Markup', ['tstart', 'tend' 'num'])(chunk.tstart, chunk.tend, chunk_pos))
+                if chunk.text = '':
+                    continue
+                chunk_pos = self.chunk_search(chunk.text, pos, min(pos + deep_coef * len(chunk), len(words)))
+                markup.append(namedtuple('Markup', ['tstart', 'tend', 'num'])(chunk.tstart, chunk.tend, chunk_pos))
                 pos = chunk_pos + len(chunk)
+        return markup
+
+
+    def make_mapping(self):
+        markup = self.map_words()
+        self.word_sec = {i:None for i in range(len(words)}
+        self.sec_word = []
+        for i in range(len(markup)):
+            pos = markup[i].num
+            nextpos = markup[i + 1].num if i + 1 < len(markup) else len(words)
+            aver_speed = float(nextpos - pos) / (markup[i].tend - markup[i].tstart)
+            chunk_word_sec = [(wordnum, markup[i].tstart + (wordnum - pos) * aver_speed) for wordnum in range(pos, nextpos)]
+            chunk_sec_word = [chunk[::-1] for chunk in chunk_word_sec]
+            self.word_sec.update(chunk_word_sec)
+            if markup[i].tstart == 0:
+                self.sec_word.append(dict(chunk_sec_word))
+            else:
+                self.sec_word[-1].update(dict(chink_sec_word))
+
+        assert not(None in set(self.word_sec.values()))
