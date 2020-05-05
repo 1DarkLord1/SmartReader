@@ -4,6 +4,7 @@ from collections import namedtuple
 import speech_recognition as sr
 from statistics import mean
 from Levenshtein import distance
+from bisect import bisect_left
 
 class ATMapper:
     def __init__(self, words, audio_paths, durs):
@@ -12,6 +13,7 @@ class ATMapper:
         self.words = words
         self.word_sec = None
         self.sec_word = None
+        self.seconds = None
 
 
     def recognize(self, audio_path, dur, chunk_time=5):
@@ -54,21 +56,23 @@ class ATMapper:
 
     def make_mapping(self):
         markup = self.map_words()
-        self.word_sec = []
+        self.word_sec = {}
         self.sec_word = []
+        audio_num = 0
         for i in range(len(markup)):
+            if markup[i].tstart == 0:
+                audio_num += 1
+                self.sec_word.append({})
             pos = markup[i].num
             nextpos = markup[i + 1].num if i + 1 < len(markup) else len(self.words)
             aver_speed = float(nextpos - pos) / (markup[i].tend - markup[i].tstart)
-            chunk_word_sec = [(wordnum, markup[i].tstart + (wordnum - pos) * aver_speed) for wordnum in range(pos, nextpos)]
-            chunk_sec_word = [chunk[::-1] for chunk in chunk_word_sec]
+            chunk_word_sec = [(wordnum, namedtuple('Time', ['audio_num', 'sec'])(audio_num, markup[i].tstart + (wordnum - pos) * aver_speed))
+            for wordnum in range(pos, nextpos)]
+            chunk_sec_word = [(chunk[1].sec, chunk[0]) for chunk in chunk_word_sec]
+            self.word_sec.update(dict(chunk_word_sec))
+            self.sec_word[-1].update(dict(chunk_sec_word))
 
-            if markup[i].tstart == 0:
-                self.sec_word.append(dict(chunk_sec_word))
-                self.word_sec.append(dict(chunk_word_sec))
-            else:
-                self.sec_word[-1].update(dict(chunk_sec_word))
-                self.word_sec[-1].update(dict(chunk_word_sec))
+        seconds = sorted([time.sec for time in self.word_sec.values()])
 
 
     def get_word_sec(self):
