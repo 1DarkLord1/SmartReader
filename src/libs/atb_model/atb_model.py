@@ -64,9 +64,7 @@ class Model:
     def make_mapping(self):
         durs = []
         for audio in self.audio_list:
-            #durs.append(self.create_wav(audio))
-            self.create_wav_from_mp3(audio)
-            durs.append(90)
+            durs.append(self.create_wav_from_mp3(audio))
 
         wav_list = list(map(lambda audio_path: audio_path.replace('mp3', 'wav'), self.audio_list))
         mapper = ATMapper(self.word_list[:200], wav_list, durs)
