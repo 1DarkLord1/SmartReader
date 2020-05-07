@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 
-import unittest, sys, os
-dir_mapper = '/home/dword/Desktop/SmartReader_denil_sharipov/src/libs/audio_text_mapper/'
-dir_atb_model = '/home/dword/Desktop/SmartReader_denil_sharipov/src/libs/atb_model/'
-sys.path.insert(0, dir_mapper)
-sys.path.insert(0, dir_atb_model)
+import sys, os
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'audio_text_mapper'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'atb_model'))
+
+import unittest
+from statistics import mean
 from audio_text_mapper import ATMapper
 from atb_model import Model
-from statistics import mean
 
 
 class test_audio_text_mapper(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(test_audio_text_mapper, self).__init__(*args, **kwargs)
-        self.test_path = '/home/dword/Desktop/SmartReader_denil_sharipov/src/test/test_files/'
+        self.test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'test_files')
         self.mdl = Model()
-        self.mdl.load(self.test_path + 'book1_data.atb')
+        self.mdl.load(os.path.join(self.test_path, 'book1_data.atb'))
         self.audio_paths = list(map(lambda path: path.replace('mp3', 'wav'), self.mdl.get_audio_list()))
 
         maxpos = 200
@@ -55,7 +56,7 @@ class test_audio_text_mapper(unittest.TestCase):
         print(mapper.map_words())
     """
 
-    """
+
     def test_make_mapping(self):
         mapper = ATMapper(self.words, self.audio_paths, self.durs)
         secs = [5 * i for i in range(17)]
@@ -63,7 +64,7 @@ class test_audio_text_mapper(unittest.TestCase):
         mapper.make_mapping()
         diff = [mapper.sec_word[0][sec] - correct_num for sec, correct_num in zip(secs, word_nums)]
         print('Average inaccuracy: {0}'.format(mean(diff)))
-    """
+
 
 if __name__ == '__main__':
     unittest.main()
