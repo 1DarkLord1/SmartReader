@@ -64,7 +64,7 @@ class ATMapper:
                 self.sec_word.append({})
             pos = markup[i].num
             nextpos = markup[i + 1].num if i + 1 < len(markup) else len(self.words)
-            aver_speed = (markup[i].tend - markup[i].tstart) / float(nextpos - pos) 
+            aver_speed = (markup[i].tend - markup[i].tstart) / float(nextpos - pos)
             chunk_word_sec = [(wordnum, namedtuple('Time', ['audio_num', 'sec'])(audio_num, markup[i].tstart + (wordnum - pos) * aver_speed))
             for wordnum in range(pos, nextpos)]
             chunk_sec_word = [(chunk[1].sec, chunk[0]) for chunk in chunk_word_sec]

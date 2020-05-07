@@ -7,6 +7,7 @@ sys.path.insert(0, dir)
 from pydub import AudioSegment
 from bisect import bisect_left
 from audio_text_mapper import ATMapper
+from collections import namedtuple
 
 class Model:
     def __init__(self):
@@ -18,6 +19,7 @@ class Model:
         self.word_sec = None
         self.sec_word = None
         self.seconds = None
+        self.mapinfo_path = '/home/dword/Desktop/SmartReader_denil_sharipov/files/mapinfo.xml'
 
 
     def get_fb2_root(self, fb2_path):
@@ -67,17 +69,43 @@ class Model:
             durs.append(self.create_wav_from_mp3(audio))
 
         wav_list = list(map(lambda audio_path: audio_path.replace('mp3', 'wav'), self.audio_list))
-        mapper = ATMapper(self.word_list[:200], wav_list, durs)
+        mapper = ATMapper(self.word_list, wav_list, durs)
         mapper.make_mapping()
         self.word_sec = mapper.get_word_sec()
         self.sec_word = mapper.get_sec_word()
         self.seconds = sorted([time.sec for time in self.word_sec.values()])
         for wav_audio in wav_list:
             os.remove(wav_audio)
-            
+
 
     def save_map(self):
         map_root = etree.Element('map')
+        for item in self.word_sec.items():
+            elem = etree.SubElement(map_root, 'elem')
+            wordnum = etree.SubElement(elem, 'word')
+            wordnum.text = str(item[0]).encode('utf-8')
+            audionum = etree.SubElement(elem, 'audio-num')
+            audionum.text = str(item[1].audio_num).encode('utf-8')
+            secnd = etree.SubElement(elem, 'sec')
+            secnd.text = str(item[1].sec).encode('utf-8')
+
+        mapinfo_tree = etree.ElementTree(map_root)
+        mapinfo_tree.write(self.mapinfo_path, pretty_print=True, xml_declaration=True, encoding='utf-8')
+
+
+    def load_map(self):
+        mapinfo_tree = etree.parse(self.mapinfo_path, etree.XMLParser(remove_blank_text=True))
+        map_root = mapinfo_tree.getroot()
+        self.word_sec = {}
+        self.sec_word = []
+        for elem in map_root.findall('elem'):
+            wordnum = int(elem.find('word').text)
+            audionum = int(elem.find('audio-num').text)
+            secnd = float(elem.find('sec').text)
+            self.word_sec.update([(wordnum, namedtuple('Time', ['audio_num', 'sec'])(audionum, secnd))])
+            if(len(self.sec_word) < audionum + 1):
+                self.sec_word.append({})
+            self.sec_word[audionum].update([(secnd, wordnum)])
 
 
     def get_audio_list(self):
