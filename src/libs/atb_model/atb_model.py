@@ -74,10 +74,10 @@ class Model:
         self.seconds = sorted([time.sec for time in self.word_sec.values()])
         for wav_audio in wav_list:
             os.remove(wav_audio)
+            
 
-
-    def save(self, path):
-        self.tree.write(path, pretty_print=True)
+    def save_map(self):
+        map_root = etree.Element('map')
 
 
     def get_audio_list(self):
