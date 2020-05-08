@@ -216,9 +216,10 @@ class Container(BoxLayout):
 
     def go_to_book(self):
         if self.is_load:
-            self.audio_file.sound.stop()
-            word_num = self.atb_model.get_word_num([self.cur_audio, self.audio_file.sound.get_pos])
+            #self.audio_file.sound.stop()
+            word_num = self.atb_model.get_word(self.cur_audio, self.audio_file.sound.get_pos())
             ind = self.find_page(word_num)
+            self.clean_word(ind)
             self.mark_word(ind, word_num)
             if ind % 2 == 0:
                 self.left_page.text = self.pages[ind]
@@ -229,9 +230,15 @@ class Container(BoxLayout):
                 self.right_page.text = self.pages[ind]
                 self.cur_page = ind - 1
 
+    def test_go_to_book(self, dt):
+        self.go_to_book()
+
+
+
     def go_to_pos_audio(self):
         self.go_to_audio_popup.dismiss()
         pos = self.atb_model.get_sec(self.cur_ref)
+        print(pos)
         self.audio_file = self.Music(self.play_list[pos[0]])
         self.audio_file.sound.seek(pos[1])
         self.time.text = self.get_audio_len()
@@ -306,6 +313,7 @@ class Container(BoxLayout):
         self.is_load = True
         self.atb_model = Model()
         self.atb_model.load(path)
+        self.atb_model.load_map()
         self.last_words = []
         self.pages = self.slice_pages(self.atb_model.get_text(), 100, 46)
         self.cur_page = 0
@@ -431,6 +439,10 @@ class Container(BoxLayout):
 
     def close_loading_bar(self):
         self.loading_popup.dismiss()
+
+    def run_test_go_to_book(self):
+        Clock.schedule_interval(self.test_go_to_book, 0.5)
+
 
     @staticmethod
     def get_color(name, num):
