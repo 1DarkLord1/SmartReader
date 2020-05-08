@@ -2,7 +2,7 @@
 
 import sys, os
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'atb_model'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'src', 'atb_model'))
 
 import unittest
 from atb_model import Model
@@ -11,7 +11,7 @@ from atb_model import Model
 class test_atb_model(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(test_atb_model, self).__init__(*args, **kwargs)
-        self.test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'test_files')
+        self.test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'test_files')
 
     def test_simple_get_audio_list(self):
         mdl = Model()

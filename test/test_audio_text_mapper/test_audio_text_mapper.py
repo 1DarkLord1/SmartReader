@@ -2,8 +2,8 @@
 
 import sys, os
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'audio_text_mapper'))
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'atb_model'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'src', 'audio_text_mapper'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'src', 'atb_model'))
 
 import unittest
 from statistics import mean
@@ -14,7 +14,7 @@ from atb_model import Model
 class test_audio_text_mapper(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(test_audio_text_mapper, self).__init__(*args, **kwargs)
-        self.test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'test_files')
+        self.test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'test_files')
         self.mdl = Model()
         self.mdl.load(os.path.join(self.test_path, 'book1_data.atb'))
         self.audio_paths = list(map(lambda path: path.replace('mp3', 'wav'), self.mdl.get_audio_list()))
