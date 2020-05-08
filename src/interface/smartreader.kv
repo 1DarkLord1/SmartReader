@@ -7,7 +7,8 @@
             size: self.size
             pos: self.pos
 
-<BackgroundLabel@Label+BackgroundColor>
+
+<BackgroundLabel@MDLabel+BackgroundColor>
     color: [0,0,0,1]
     background_color: 1, 1, 1, 1
 
@@ -23,32 +24,98 @@
         PopMatrix
 
 
-
-
-
 <VolumePopup>:
     volume: slider_id.value
     size_hint: (0.3, 0.1)
-    pos_hint: {'right': 1, 'top': 1}
+    pos_hint: {'right': 1, 'top': 0.16}
     title: "  Volume: " + str(slider_id.value)
-    Slider:
+
+    MDSlider:
         min: 0
         max: 100
         step: 1
         value: 100
+        thumb_color_down: 0, 0, 0, 1
+        hint: False
         id: slider_id
 
 <GoToAudio>:
-    func: 0
-    size_hint: (0.15, 0.15)
-    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-    title: ''
-    Button:
+    MDRectangleFlatIconButton:
         text: 'Go to Audio'
+        size_hint: 1, 1
+        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+        md_bg_color: root.color('LightGreen', '300')
+        text_color: 0, 0, 0, 1
+        icon: 'audiobook'
         on_release:
-            root.go_to_audio()
+            root.func()
 
+<ChooseFile>:
+    select_button: select_button
+    filechooser: filechooser
+    canvas.before:
+        Color:
+            rgba: root.get_color('Blue', '500')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserIconView:
+            id: filechooser
+            path:
+                root.get_path()
 
+        FloatLayout:
+            size_hint_y: 0.1
+            height: 30
+            MDRaisedButton:
+                text: "Cancel"
+                md_bg_color:
+                    root.get_color('Blue', '800')
+                text_color: 1, 1 ,1 ,1
+                pos_hint: {'right': 0.5, 'top': 1}
+                size_hint: 0.5, 1
+                on_release: root.cancel()
+
+            MDRaisedButton:
+                id: select_button
+                text: "Select Folder"
+                md_bg_color:
+                    root.get_color('Blue', '800')
+                text_color: 1, 1 ,1 ,1
+                pos_hint: {'right': 1, 'top': 1}
+                size_hint: 0.5, 1
+                on_release: root.select(filechooser.path, filechooser.selection)
+
+<FileDialog>:
+    Button:
+        background_color: 0,.5,1,1
+        text: 'Import book'
+        on_release: root.import_book()
+    Button:
+        background_color: 0,.5,1,1
+        text: 'Open atb file'
+        on_release: root.open_atb()
+
+<MessagePopup>:
+    msg: msg
+    Button:
+        id: msg
+        background_color: 0,.5,1,1
+        on_release: root.close()
+
+<LoadingBar>:
+    pb: pb
+    orientation: 'vertical'
+
+    ProgressBar:
+        id: pb
+        min :0
+        max :100
+        value: 0
 
 
 <Container>:
@@ -57,104 +124,85 @@
     music_button: music_button
     slider: slider
     time: time
+    view: view
+    play_layout: play_layout
+    file_btn: file_btn
+    volume_btn: volume_btn
 
 
     orientation: 'vertical'
-    BoxLayout:
-        size_hint: 1, 0.04
+    MDFloatLayout:
+        size_hint: 1, 0.06
+        md_bg_color:
+            root.get_color('LightGreen', '300')
 
-        Button:
+        MDRectangleFlatIconButton:
+            id: file_btn
+            pos_hint: {'right': 0.125, 'top': 1}
+            icon: 'file'
             text: 'File'
+            size_hint: 0.125, 1
+            text_color: 0, 0, 0, 1
+            on_release:
+                root.menu.open()
 
-        Button:
+        MDRectangleFlatIconButton:
+            id: view
+            pos_hint: {'right': 0.25, 'top': 1}
+            size_hint: 0.125, 1
+            text_color: 0, 0, 0, 1
+            icon: 'view-agenda'
             text: 'View'
 
-        Button:
-            text: 'Navigation'
 
-        Button:
+        MDRectangleFlatIconButton:
+            text: 'Navigation'
+            text_color: 0, 0, 0, 1
+            icon: 'book-search'
+            pos_hint: {'right': 0.375, 'top': 1}
+            size_hint: 0.125, 1
+
+        MDRectangleFlatIconButton:
+            pos_hint: {'right': 0.5, 'top': 1}
+            size_hint: 0.125, 1
+            text_color: 0, 0, 0, 1
+            icon: 'bookmark-multiple-outline'
             text: 'Bookmarks'
 
+        MDRectangleFlatIconButton:
+            icon: 'format-font'
+            text_color: 0, 0, 0, 1
+            pos_hint: {'right': 0.625, 'top': 1}
+            size_hint: 0.125, 1
+            text: 'Font'
 
-    BoxLayout:
-        size_hint: 1, 0.04
-        Button:
-            text: '<-'
+        MDRectangleFlatIconButton:
+            pos_hint: {'right': 0.75, 'top': 1}
+            size_hint: 0.125, 1
+            icon: 'weather-night'
+            text_color: 0, 0, 0, 1
+            text: 'Night mode'
+            on_release:
+                root.night_mode()
+
+        MDRectangleFlatIconButton:
+            pos_hint: {'right': 0.875, 'top': 1}
+            size_hint: 0.125, 1
+            icon: 'arrow-left'
+            text_color: 0, 0, 0, 1
+            text: 'Prev page'
             on_release:
                 root.change_text_l()
-        Button:
-            text: '->'
+        MDRectangleFlatIconButton:
+            pos_hint: {'right': 1, 'top': 1}
+            size_hint: 0.125, 1
+            icon: 'arrow-right'
+            text_color: 0, 0, 0, 1
+            text: 'Next page'
             on_release:
                 root.change_text_r()
 
-        Button:
-            text: 'Add new bookmark'
 
-        Button:
-            text: '+'
-
-        Button:
-            text: '-'
-
-        Button:
-            text: 'Night mode'
-
-    BoxLayout:
-        size_hint: 1, 0.04
-        Button:
-            size_hint: 0.4, 1
-            text: '<<'
-            on_release:
-                root.prev_audio()
-
-
-        ToggleButton:
-            id: music_button
-            size_hint: 0.4, 1
-            text:'play'
-            on_press:
-                root.play_or_stop()
-
-
-        Button:
-            size_hint: 0.4, 1
-            text: '>>'
-            on_release:
-                root.next_audio()
-
-        ScaleLabel:
-            id: time
-            size_hint: 0.2, 1
-
-
-
-        Slider:
-            id: slider
-            size_hint: 1.5, 1
-            min: 0
-            max: 100
-            step: 1
-            value:
-                root.move_slider()
-
-            on_touch_up:
-                root.move_pos_audio(self.value)
-
-
-
-
-        Button:
-            size_hint: 0.5, 1
-            text: 'Volume'
-            on_release:
-                root.volume_slider_open()
-
-
-        Button:
-            size_hint: 0.5, 1
-            text: 'Go to book'
-            on_release:
-                root.go_to_book()
 
     BoxLayout:
         canvas:
@@ -168,9 +216,7 @@
         BackgroundLabel:
             id: left_page
             markup: True
-            #text:
-                #root.set_text_l()
-
+            text: 'Hello! This is SmartReader\nPress File button to import new book or open atb file'
             on_ref_press:
                 root.ref_press(*args)
             text_size: self.size
@@ -180,15 +226,13 @@
 
         BackgroundLabel:
             background_color: 0, 0, 0, 1
-            size_hint: 0.01, 1
+            size_hint: 0.005, 1
 
 
 
         BackgroundLabel:
             id: right_page
             markup: True
-            #text:
-             #   root.set_text_r()
             on_ref_press:
                 root.ref_press(*args)
             text_size: self.size
@@ -196,9 +240,74 @@
             valign: 'top'
             padding: (10,10)
 
+    MDBoxLayout:
+        id: play_layout
+        size_hint: 1, 0.06
+        md_bg_color:
+            root.get_color('LightGreen', '300')
+        MDIconButton:
+            size_hint: 0.3, 1
+            icon: 'skip-previous'
+            user_font_size: '32sp'
+            on_release:
+                root.prev_audio()
+
+
+        MDIconButton:
+            id: music_button
+            size_hint: 0.3, 1
+            icon: 'play-circle-outline'
+            user_font_size: '36sp'
+            on_release:
+                root.play_or_stop()
+
+
+        MDIconButton:
+            size_hint: 0.3, 1
+            icon: 'skip-next'
+            user_font_size: '32sp'
+            on_release:
+                root.next_audio()
+
+        ScaleLabel:
+            id: time
+            size_hint: 0.2, 1
+            color: [0,0,0,1]
+            text: '00:00/00:00'
 
 
 
+        MDSlider:
+            id: slider
+            size_hint: 1.5, 1
+            min: 0
+            max: 100
+            step: 1
+            thumb_color_down: 0, 0, 0, 1
+            hint: False
+            on_touch_up:
+                root.move_pos_audio(self.value)
+
+
+
+
+        MDRectangleFlatIconButton:
+            id: volume_btn
+            size_hint: 0.4, 1
+            icon: 'volume-high'
+            text: 'Volume'
+            text_color: 0, 0, 0, 1
+            on_release:
+                root.volume_slider_open()
+
+
+        MDRectangleFlatIconButton:
+            size_hint: 0.4, 1
+            icon: 'book-open'
+            text: 'Go to book'
+            text_color: 0, 0, 0, 1
+            on_release:
+                root.go_to_book()
 
 
 
