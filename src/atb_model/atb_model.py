@@ -22,7 +22,6 @@ class Model:
         self.word_sec = None
         self.sec_word = None
         self.seconds = None
-        self.mapinfo_path = None
 
 
     def get_fb2_root(self, fb2_path):
@@ -68,6 +67,23 @@ class Model:
         source.export(audio_path.replace('mp3', 'wav'), format='wav')
         return int(source.duration_seconds)
 
+
+    def save_map(self, mapinfo_rel_path):
+        mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', mapinfo_rel_path)
+        map_root = etree.Element('map')
+        for item in self.word_sec.items():
+            elem = etree.SubElement(map_root, 'elem')
+            wordnum = etree.SubElement(elem, 'word')
+            wordnum.text = str(item[0]).encode('utf-8')
+            audionum = etree.SubElement(elem, 'audio-num')
+            audionum.text = str(item[1].audio_num).encode('utf-8')
+            secnd = etree.SubElement(elem, 'sec')
+            secnd.text = str(item[1].sec).encode('utf-8')
+
+        mapinfo_tree = etree.ElementTree(map_root)
+        mapinfo_tree.write(mapinfo_path, pretty_print=True, xml_declaration=True, encoding='utf-8')
+
+
     def make_mapping(self):
         durs = []
         for audio in self.audio_list:
@@ -81,26 +97,14 @@ class Model:
         self.seconds = sorted([time.sec for time in self.word_sec.values()])
         for wav_audio in wav_list:
             os.remove(wav_audio)
+        fb2_name = self.root.find('fb2').text.split('/')[-1].replace('.fb2', '')
+        self.save_map('files/mapinfo_' + fb2_name + '.xml')
 
 
-    def save_map(self, mapinfo_rel_path):
-        map_root = etree.Element('map')
-        for item in self.word_sec.items():
-            elem = etree.SubElement(map_root, 'elem')
-            wordnum = etree.SubElement(elem, 'word')
-            wordnum.text = str(item[0]).encode('utf-8')
-            audionum = etree.SubElement(elem, 'audio-num')
-            audionum.text = str(item[1].audio_num).encode('utf-8')
-            secnd = etree.SubElement(elem, 'sec')
-            secnd.text = str(item[1].sec).encode('utf-8')
-
-        mapinfo_tree = etree.ElementTree(map_root)
-        mapinfo_tree.write(self.mapinfo_path, pretty_print=True, xml_declaration=True, encoding='utf-8')
-
-
-    def load_map(self, mapinfo_rel_path):
-        self.mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', mapinfo_rel_path)
-        mapinfo_tree = etree.parse(self.mapinfo_path, etree.XMLParser(remove_blank_text=True))
+    def load_map(self):
+        mapinfo_rel_path = self.root.find('mapinfo').text
+        mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', mapinfo_rel_path)
+        mapinfo_tree = etree.parse(mapinfo_path, etree.XMLParser(remove_blank_text=True))
         map_root = mapinfo_tree.getroot()
         self.word_sec = {}
         self.sec_word = []
@@ -134,3 +138,8 @@ class Model:
         lb_sec_pos = bisect_left(self.seconds, sec)
         near_sec = self.seconds[lb_sec_pos] if self.seconds[lb_sec_pos] == sec else self.seconds[lb_sec_pos - 1]
         return self.sec_word[audio_num][near_sec]
+
+if __name__ == '__main__':
+    mdl = Model()
+    mdl.load(os.path.join(os.getcwd(), '..', '..', 'test_files', 'book1_data.atb'))
+    mdl.make_mapping()

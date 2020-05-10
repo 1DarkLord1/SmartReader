@@ -3,4 +3,5 @@
 <audio>
 	<file>test_files/book1.mp3</file>
 </audio>
+<mapinfo>files/mainfo.xml</mapinfo>
 </atb>
