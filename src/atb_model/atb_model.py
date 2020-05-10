@@ -26,6 +26,7 @@ class Model:
 
 
     def get_fb2_root(self, fb2_path):
+        fb2_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', fb2_path)
         fb2_tree = etree.parse(fb2_path, etree.XMLParser(remove_blank_text=True))
         fb2_root = fb2_tree.getroot()
         for elem in fb2_root.getiterator():
@@ -50,7 +51,8 @@ class Model:
 
     def parse_audio_list(self):
         audio = self.root.find('audio')
-        self.audio_list = [file.text for file in audio.findall('file')]
+        self.audio_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..',file.text)
+        for file in audio.findall('file')]
 
 
     def load(self, path):

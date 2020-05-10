@@ -13,23 +13,6 @@ class test_atb_model(unittest.TestCase):
         super(test_atb_model, self).__init__(*args, **kwargs)
         self.test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'test_files')
 
-    def test_simple_get_audio_list(self):
-        mdl = Model()
-        dir = os.path.join(self.test_path, 'simple.atb')
-        mdl.load(dir)
-        correct_audio_list = ['1.mp3', '2.mp3', '3.mp3', '4.mp3']
-        self.assertEqual(mdl.get_audio_list(), correct_audio_list)
-
-
-    def test_hard_names_get_audio_list(self):
-        mdl = Model()
-        dir = os.path.join(self.test_path, 'hard_names.atb')
-        mdl.load(dir)
-        correct_audio_list = ['dwdawsdw.mp3', '^12e31.mp3', 'sFSDSA.mp3', 'dsaxaS.mp3',
-        '2`3WEFFECWDA.mp3', 'DCESXMXK.mp3', '7xsxs.mp3', '213dom,.mp3', 'xazz.mp3',
-        'dekassx.mp3', 'xwqslq.mp3', 'pf[]q.mp3', 'sxzxx.mp3', '120DWS.mp3', 'DDS.mp3']
-        self.assertEqual(mdl.get_audio_list(), correct_audio_list)
-
 
     def test_book1_get_word_list(self):
         mdl = Model()
