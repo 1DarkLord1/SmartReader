@@ -6,4 +6,7 @@ python3 -m pip install ffpyplayer
 python3 -m pip install lxml
 python3 -m pip install --upgrade Pillow
 python3 -m pip install kivymd
-
+pip3 install SpeechRecognition
+pip3 install SpeechRecognition
+pip3 install pydub
+pip3 install ffmpeg-python
