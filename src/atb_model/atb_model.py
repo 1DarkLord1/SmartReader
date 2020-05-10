@@ -22,10 +22,11 @@ class Model:
         self.word_sec = None
         self.sec_word = None
         self.seconds = None
-        self.mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'files')
+        self.mapinfo_path = None
 
 
     def get_fb2_root(self, fb2_path):
+        fb2_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', fb2_path)
         fb2_tree = etree.parse(fb2_path, etree.XMLParser(remove_blank_text=True))
         fb2_root = fb2_tree.getroot()
         for elem in fb2_root.getiterator():
@@ -50,7 +51,8 @@ class Model:
 
     def parse_audio_list(self):
         audio = self.root.find('audio')
-        self.audio_list = [file.text for file in audio.findall('file')]
+        self.audio_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..',file.text)
+        for file in audio.findall('file')]
 
 
     def load(self, path):
@@ -96,7 +98,8 @@ class Model:
         mapinfo_tree.write(self.mapinfo_path, pretty_print=True, xml_declaration=True, encoding='utf-8')
 
 
-    def load_map(self):
+    def load_map(self, mapinfo_rel_path):
+        self.mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', mapinfo_rel_path)
         mapinfo_tree = etree.parse(self.mapinfo_path, etree.XMLParser(remove_blank_text=True))
         map_root = mapinfo_tree.getroot()
         self.word_sec = {}
@@ -109,6 +112,8 @@ class Model:
             if(len(self.sec_word) < audionum + 1):
                 self.sec_word.append({})
             self.sec_word[audionum].update([(secnd, wordnum)])
+        self.seconds = sorted([time.sec for time in self.word_sec.values()])
+
 
 
     def get_audio_list(self):
@@ -131,3 +136,4 @@ class Model:
         lb_sec_pos = bisect_left(self.seconds, sec)
         near_sec = self.seconds[lb_sec_pos] if self.seconds[lb_sec_pos] == sec else self.seconds[lb_sec_pos - 1]
         return self.sec_word[audio_num][near_sec]
+

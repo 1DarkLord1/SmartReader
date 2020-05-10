@@ -9,7 +9,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ObjectProperty
 from kivymd.app import MDApp
 
-from atb.atb_model import Model
+from atb_model.atb_model import Model
 from kivy.app import App
 from kivymd.toast import toast
 from kivymd.uix.button import MDRectangleFlatButton, MDRaisedButton, MDRectangleFlatIconButton, MDIconButton, \
@@ -313,7 +313,7 @@ class Container(BoxLayout):
         self.is_load = True
         self.atb_model = Model()
         self.atb_model.load(path)
-        self.atb_model.load_map()
+        self.atb_model.load_map('files/mapinfo.xml')
         self.last_words = []
         self.pages = self.slice_pages(self.atb_model.get_text(), 100, 46)
         self.cur_page = 0

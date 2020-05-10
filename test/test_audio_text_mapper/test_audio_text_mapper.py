@@ -17,7 +17,10 @@ class test_audio_text_mapper(unittest.TestCase):
         self.test_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'test_files')
         self.mdl = Model()
         self.mdl.load(os.path.join(self.test_path, 'book1_data.atb'))
-        self.audio_paths = list(map(lambda path: path.replace('mp3', 'wav'), self.mdl.get_audio_list()))
+        audio_paths = self.mdl.get_audio_list()
+        self.wav_paths = list(map(lambda path: path.replace('mp3', 'wav'), audio_paths))
+        for audio in audio_paths:
+            self.mdl.create_wav_from_mp3(audio)
 
         maxpos = 200
         dur = 90
@@ -26,7 +29,7 @@ class test_audio_text_mapper(unittest.TestCase):
 
 
     def test_chunk_search_correct(self):
-        mapper = ATMapper(self.words, self.audio_paths, self.durs)
+        mapper = ATMapper(self.words, self.wav_paths, self.durs)
         chunk = ['а', 'от', 'них', 'никак', 'нельзя', 'было', 'ожидать']
         startp = 0
         endp = 100
@@ -36,7 +39,7 @@ class test_audio_text_mapper(unittest.TestCase):
 
 
     def test_chunk_search_with_mistake(self):
-        mapper = ATMapper(self.words, self.audio_paths, self.durs)
+        mapper = ATMapper(self.words, self.wav_paths, self.durs)
         chunk = ['а', 'вт', 'ник', 'микак', 'нельзя', 'мыло', 'ажедать']
         startp = 0
         endp = 100
@@ -58,7 +61,7 @@ class test_audio_text_mapper(unittest.TestCase):
 
 
     def test_make_mapping(self):
-        mapper = ATMapper(self.words, self.audio_paths, self.durs)
+        mapper = ATMapper(self.words, self.wav_paths, self.durs)
         secs = [5 * i for i in range(17)]
         word_nums = [13, 24, 33, 45, 54, 63, 70, 77, 88, 98, 112, 122, 131, 142, 155, 165, 175]
         mapper.make_mapping()
