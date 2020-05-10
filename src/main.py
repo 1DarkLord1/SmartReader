@@ -1,5 +1,5 @@
 from interface.interface import Container
-from atb.atb_model import Model
+from atb_model.atb_model import Model
 import sys
 from kivy.lang.builder import Builder
 from kivymd.app import MDApp
