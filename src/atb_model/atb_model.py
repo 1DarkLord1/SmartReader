@@ -22,7 +22,7 @@ class Model:
         self.word_sec = None
         self.sec_word = None
         self.seconds = None
-        self.mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'files')
+        self.mapinfo_path = None
 
 
     def get_fb2_root(self, fb2_path):
@@ -83,7 +83,7 @@ class Model:
             os.remove(wav_audio)
 
 
-    def save_map(self):
+    def save_map(self, mapinfo_rel_path):
         map_root = etree.Element('map')
         for item in self.word_sec.items():
             elem = etree.SubElement(map_root, 'elem')
@@ -98,7 +98,8 @@ class Model:
         mapinfo_tree.write(self.mapinfo_path, pretty_print=True, xml_declaration=True, encoding='utf-8')
 
 
-    def load_map(self):
+    def load_map(self, mapinfo_rel_path):
+        self.mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', mapinfo_rel_path)
         mapinfo_tree = etree.parse(self.mapinfo_path, etree.XMLParser(remove_blank_text=True))
         map_root = mapinfo_tree.getroot()
         self.word_sec = {}
