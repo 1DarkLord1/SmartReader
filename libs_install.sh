@@ -10,3 +10,4 @@ pip3 install SpeechRecognition
 pip3 install SpeechRecognition
 pip3 install pydub
 pip3 install ffmpeg-python
+pip3 install python-Levenshtein
