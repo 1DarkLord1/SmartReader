@@ -78,3 +78,4 @@ class ATMapper:
 
     def get_sec_word(self):
         return self.sec_word
+

@@ -313,7 +313,7 @@ class Container(BoxLayout):
         self.is_load = True
         self.atb_model = Model()
         self.atb_model.load(path)
-        self.atb_model.load_map('files/mapinfo.xml')
+        self.atb_model.load_map()
         self.last_words = []
         self.pages = self.slice_pages(self.atb_model.get_text(), 100, 46)
         self.cur_page = 0
