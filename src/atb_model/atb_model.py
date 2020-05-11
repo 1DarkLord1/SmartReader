@@ -19,6 +19,8 @@ class Model:
         self.text = None
         self.word_list = None
         self.audio_list = None
+        self.fb2_dir = None
+        self.fb2_name = None
         self.word_sec = None
         self.sec_word = None
         self.seconds = None
@@ -57,6 +59,8 @@ class Model:
     def load(self, path):
         self.tree = etree.parse(path, etree.XMLParser(remove_blank_text=True))
         self.root = self.tree.getroot()
+        self.fb2_name = self.root.find('fb2').text.split('/')[-1].replace('.fb2', '')
+        self.fb2_dir = self.root.find('fb2').text.replace(self.fb2_name + '.fb2', '')
         self.load_text()
         self.make_word_list()
         self.parse_audio_list()
@@ -97,8 +101,8 @@ class Model:
         self.seconds = sorted([time.sec for time in self.word_sec.values()])
         for wav_audio in wav_list:
             os.remove(wav_audio)
-        fb2_name = self.root.find('fb2').text.split('/')[-1].replace('.fb2', '')
-        self.save_map('test_files/mapinfo_' + fb2_name + '.xml')
+
+        self.save_map(os.path.join(self.fb2_dir, 'mapinfo_' + self.fb2_name + '.xml'))
 
 
     def load_map(self):
