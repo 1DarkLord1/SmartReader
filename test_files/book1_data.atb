@@ -1,7 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <atb>
 <fb2>test_files/book1.fb2</fb2>
 <audio>
 	<file>test_files/book1.mp3</file>
 </audio>
-<mapinfo>files/mainfo.xml</mapinfo>
+<mapinfo>test_files/mapinfo_book1.xml</mapinfo>
 </atb>

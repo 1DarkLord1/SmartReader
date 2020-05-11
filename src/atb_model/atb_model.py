@@ -98,7 +98,7 @@ class Model:
         for wav_audio in wav_list:
             os.remove(wav_audio)
         fb2_name = self.root.find('fb2').text.split('/')[-1].replace('.fb2', '')
-        self.save_map('files/mapinfo_' + fb2_name + '.xml')
+        self.save_map('test_files/mapinfo_' + fb2_name + '.xml')
 
 
     def load_map(self):
@@ -138,8 +138,3 @@ class Model:
         lb_sec_pos = bisect_left(self.seconds, sec)
         near_sec = self.seconds[lb_sec_pos] if self.seconds[lb_sec_pos] == sec else self.seconds[lb_sec_pos - 1]
         return self.sec_word[audio_num][near_sec]
-
-if __name__ == '__main__':
-    mdl = Model()
-    mdl.load(os.path.join(os.getcwd(), '..', '..', 'test_files', 'book1_data.atb'))
-    mdl.make_mapping()

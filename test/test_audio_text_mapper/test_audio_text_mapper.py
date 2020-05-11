@@ -47,17 +47,16 @@ class test_audio_text_mapper(unittest.TestCase):
         correct_pos = 40
         self.assertEqual(match_pos, correct_pos)
 
-    """
+    @unittest.skip("Manual test")
     def test_recognize(self):
         mapper = ATMapper(self.words, self.audio_paths, self.durs)
         print(mapper.recognize(self.audio_paths[0], self.durs[0]))
-    """
 
-    """
+
+    @unittest.skip("Manual test")
     def test_map_words(self):
         mapper = ATMapper(self.words, self.audio_paths, self.durs)
         print(mapper.map_words())
-    """
 
 
     def test_make_mapping(self):
