@@ -6,7 +6,7 @@
  source ~/kivy_venv/bin/activate
 ```
 #### Next step enter:
-```python3 libs_install.sh```
+```bash libs_install.sh```
 #### To run tests enter: 
 ```python3 test/test.py```
 #### To run main program enter:
