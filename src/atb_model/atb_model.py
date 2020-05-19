@@ -112,6 +112,26 @@ class Model:
         self.seconds = sorted([time.sec for time in self.word_sec.values()])
 
 
+    def make_atb(self, book_path, audio_paths, folder):
+        folder_name = folder.split('/')[-1]
+        audio_paths = [os.path.join(folder_name, path.split('/')[-1]) for path in audio_paths]
+        book_name = book_path.split('/')[-1].replace('.fb2', '')
+        book_path = os.path.join(folder_name, book_name + '.fb2')
+
+        atb_root = etree.Element('atb')
+        fb2 = etree.SubElement(atb_root, 'fb2')
+        fb2.text = book_path
+        audio = etree.SubElement(atb_root, 'audio')
+        for audio_path in audio_paths:
+            file = etree.SubElement(audio, 'file')
+            file.text = audio_path
+        mapinfo = etree.SubElement(atb_root, 'mapinfo')
+        mapinfo.text = os.path.join(folder_name, 'mapinfo_' + book_name + '.dat')
+
+        atb_tree = etree.ElementTree(atb_root)
+        atb_tree.write(os.path.join(folder, book_name + '_data' + '.atb'), pretty_print=True, xml_declaration=True, encoding='utf-8')
+
+
     def get_audio_list(self):
         return self.audio_list
 
