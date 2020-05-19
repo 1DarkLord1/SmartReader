@@ -5,6 +5,7 @@ import speech_recognition as sr
 from statistics import mean
 from Levenshtein import distance
 
+
 class ATMapper:
     def __init__(self, words, audio_paths, durs):
         self.audio_paths = audio_paths
@@ -78,4 +79,3 @@ class ATMapper:
 
     def get_sec_word(self):
         return self.sec_word
-
