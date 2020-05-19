@@ -50,12 +50,43 @@
         on_release:
             root.func()
 
+<GoToPage>:
+    orientation: 'vertical'
+    FloatLayout:
+        size_hint: 1, 0.5
+        MDTextField:
+            pos_hint: {'right': 0.5, 'top': 1}
+            size_hint: 0.5, 1
+            halign: 'center'
+            valign: 'center'
+            multiline: False
+            text: '12'
+        Label:
+            pos_hint: {'right': 1, 'top': 1}
+            size_hint: 0.5, 1
+            text: 'of 123'
+            halign: 'center'
+
+    FloatLayout:
+        size_hint: 1, 0.5
+        MDRaisedButton:
+            pos_hint: {'right': 0.5, 'top': 1}
+            size_hint: 0.5, 1
+            text: 'Cancel'
+        MDRaisedButton:
+            pos_hint: {'right': 1, 'top': 1}
+            size_hint: 0.5, 1
+            text: 'Ok'
+
+
+
+
 <ChooseFile>:
     select_button: select_button
     filechooser: filechooser
     canvas.before:
         Color:
-            rgba: root.get_color('Blue', '500')
+            rgba: root.get_color('Green', '600')
         Rectangle:
             pos: self.pos
             size: self.size
@@ -74,7 +105,7 @@
             MDRaisedButton:
                 text: "Cancel"
                 md_bg_color:
-                    root.get_color('Blue', '800')
+                    root.get_color('Green', '900')
                 text_color: 1, 1 ,1 ,1
                 pos_hint: {'right': 0.5, 'top': 1}
                 size_hint: 0.5, 1
@@ -84,7 +115,7 @@
                 id: select_button
                 text: "Select Folder"
                 md_bg_color:
-                    root.get_color('Blue', '800')
+                    root.get_color('Green', '900')
                 text_color: 1, 1 ,1 ,1
                 pos_hint: {'right': 1, 'top': 1}
                 size_hint: 0.5, 1
@@ -123,11 +154,14 @@
     right_page: right_page
     music_button: music_button
     slider: slider
-    time: time
+    time_label: time_label
     view: view
     play_layout: play_layout
     file_btn: file_btn
     volume_btn: volume_btn
+    loading_label: loading_label
+    spinner: spinner
+    nav_btn: nav_btn
 
 
     orientation: 'vertical'
@@ -139,12 +173,12 @@
         MDRectangleFlatIconButton:
             id: file_btn
             pos_hint: {'right': 0.125, 'top': 1}
+            size_hint: 0.125, 1
             icon: 'file'
             text: 'File'
-            size_hint: 0.125, 1
             text_color: 0, 0, 0, 1
             on_release:
-                root.menu.open()
+                root.file_menu.open()
 
         MDRectangleFlatIconButton:
             id: view
@@ -156,11 +190,14 @@
 
 
         MDRectangleFlatIconButton:
+            id: nav_btn
+            pos_hint: {'right': 0.375, 'top': 1}
+            size_hint: 0.125, 1
             text: 'Navigation'
             text_color: 0, 0, 0, 1
             icon: 'book-search'
-            pos_hint: {'right': 0.375, 'top': 1}
-            size_hint: 0.125, 1
+
+
 
         MDRectangleFlatIconButton:
             pos_hint: {'right': 0.5, 'top': 1}
@@ -170,10 +207,10 @@
             text: 'Bookmarks'
 
         MDRectangleFlatIconButton:
-            icon: 'format-font'
-            text_color: 0, 0, 0, 1
             pos_hint: {'right': 0.625, 'top': 1}
             size_hint: 0.125, 1
+            icon: 'format-font'
+            text_color: 0, 0, 0, 1
             text: 'Font'
 
         MDRectangleFlatIconButton:
@@ -193,6 +230,7 @@
             text: 'Prev page'
             on_release:
                 root.change_text_l()
+
         MDRectangleFlatIconButton:
             pos_hint: {'right': 1, 'top': 1}
             size_hint: 0.125, 1
@@ -202,16 +240,12 @@
             on_release:
                 root.change_text_r()
 
-
-
     BoxLayout:
         canvas:
             Color:
                 rgb: 1, 1, 1
             Rectangle:
                 size: self.size
-
-
 
         BackgroundLabel:
             id: left_page
@@ -228,8 +262,6 @@
             background_color: 0, 0, 0, 1
             size_hint: 0.005, 1
 
-
-
         BackgroundLabel:
             id: right_page
             markup: True
@@ -240,13 +272,14 @@
             valign: 'top'
             padding: (10,10)
 
-    MDBoxLayout:
+    MDFloatLayout:
         id: play_layout
         size_hint: 1, 0.06
         md_bg_color:
             root.get_color('LightGreen', '300')
         MDIconButton:
-            size_hint: 0.3, 1
+            pos_hint: {'right': 0.09, 'top': 1}
+            size_hint: 0.09, 1
             icon: 'skip-previous'
             user_font_size: '32sp'
             on_release:
@@ -255,7 +288,8 @@
 
         MDIconButton:
             id: music_button
-            size_hint: 0.3, 1
+            pos_hint: {'right': 0.18, 'top': 1}
+            size_hint: 0.09, 1
             icon: 'play-circle-outline'
             user_font_size: '36sp'
             on_release:
@@ -263,15 +297,17 @@
 
 
         MDIconButton:
-            size_hint: 0.3, 1
+            pos_hint: {'right': 0.27, 'top': 1}
+            size_hint: 0.09, 1
             icon: 'skip-next'
             user_font_size: '32sp'
             on_release:
                 root.next_audio()
 
         ScaleLabel:
-            id: time
-            size_hint: 0.2, 1
+            id: time_label
+            pos_hint: {'right': 0.32, 'top': 1}
+            size_hint: 0.05, 1
             color: [0,0,0,1]
             text: '00:00/00:00'
 
@@ -279,7 +315,8 @@
 
         MDSlider:
             id: slider
-            size_hint: 1.5, 1
+            pos_hint: {'right': 0.7, 'top': 1}
+            size_hint: 0.37, 1
             min: 0
             max: 100
             step: 1
@@ -293,7 +330,8 @@
 
         MDRectangleFlatIconButton:
             id: volume_btn
-            size_hint: 0.4, 1
+            pos_hint: {'right': 0.8, 'top': 1}
+            size_hint: 0.1, 1
             icon: 'volume-high'
             text: 'Volume'
             text_color: 0, 0, 0, 1
@@ -302,12 +340,33 @@
 
 
         MDRectangleFlatIconButton:
-            size_hint: 0.4, 1
+            pos_hint: {'right': 0.9, 'top': 1}
+            size_hint: 0.1, 1
             icon: 'book-open'
             text: 'Go to book'
             text_color: 0, 0, 0, 1
             on_release:
                 root.go_to_book()
+
+        MDSpinner:
+            id: spinner
+            size_hint: 0.015, None
+            pos_hint: {'center_x': 0.915, 'center_y': 0.5}
+            color:
+                root.get_color('LightGreen', '300')
+            active: False
+
+
+        ScaleLabel:
+            id: loading_label
+            pos_hint: {'right': 1, 'top': 1}
+            size_hint: 0.1, 1
+            text: 'Book not opened'
+            color: 0, 0, 0, 1
+            halign: 'left'
+
+
+
 
 
 

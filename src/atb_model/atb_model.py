@@ -120,6 +120,8 @@ class Model:
             if(len(self.sec_word) < audionum + 1):
                 self.sec_word.append({})
             self.sec_word[audionum].update([(secnd, wordnum)])
+        self.seconds = sorted([time.sec for time in self.word_sec.values()])
+
 
 
     def get_audio_list(self):
@@ -142,3 +144,4 @@ class Model:
         lb_sec_pos = bisect_left(self.seconds, sec)
         near_sec = self.seconds[lb_sec_pos] if self.seconds[lb_sec_pos] == sec else self.seconds[lb_sec_pos - 1]
         return self.sec_word[audio_num][near_sec]
+
