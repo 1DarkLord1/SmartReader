@@ -2,32 +2,43 @@
 
 import sys, os
 
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'audio_text_mapper'))
+def gen_path(paths):
+    full_path = os.path.dirname(os.path.abspath(__file__))
+    for path in paths:
+        full_path = os.path.join(full_path, path)
+    return full_path
 
+sys.path.append(gen_path(['..', 'audio_text_mapper']))
+
+import dill
 from lxml import etree
 import re
 from pydub import AudioSegment
 from bisect import bisect_left
 from collections import namedtuple
 from audio_text_mapper import ATMapper
-
+import shutil
 
 class Model:
     def __init__(self):
+        self.root_name = 'books'
+
         self.tree = None
         self.root = None
+        self.fb2_dir = None
+        self.fb2_name = None
+
         self.text = None
         self.word_list = None
         self.audio_list = None
-        self.fb2_dir = None
-        self.fb2_name = None
+
         self.word_sec = None
         self.sec_word = None
         self.seconds = None
 
 
     def get_fb2_root(self, fb2_path):
-        fb2_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', fb2_path)
+        fb2_path = gen_path(['..', '..', fb2_path])
         fb2_tree = etree.parse(fb2_path, etree.XMLParser(remove_blank_text=True))
         fb2_root = fb2_tree.getroot()
         for elem in fb2_root.getiterator():
@@ -52,8 +63,7 @@ class Model:
 
     def parse_audio_list(self):
         audio = self.root.find('audio')
-        self.audio_list = [os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..',file.text)
-        for file in audio.findall('file')]
+        self.audio_list = [gen_path(['..', '..',file.text]) for file in audio.findall('file')]
 
 
     def load(self, path):
@@ -72,22 +82,6 @@ class Model:
         return int(source.duration_seconds)
 
 
-    def save_map(self, mapinfo_rel_path):
-        mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', mapinfo_rel_path)
-        map_root = etree.Element('map')
-        for item in self.word_sec.items():
-            elem = etree.SubElement(map_root, 'elem')
-            wordnum = etree.SubElement(elem, 'word')
-            wordnum.text = str(item[0]).encode('utf-8')
-            audionum = etree.SubElement(elem, 'audio-num')
-            audionum.text = str(item[1].audio_num).encode('utf-8')
-            secnd = etree.SubElement(elem, 'sec')
-            secnd.text = str(item[1].sec).encode('utf-8')
-
-        mapinfo_tree = etree.ElementTree(map_root)
-        mapinfo_tree.write(mapinfo_path, pretty_print=True, xml_declaration=True, encoding='utf-8')
-
-
     def make_mapping(self):
         durs = []
         for audio in self.audio_list:
@@ -98,30 +92,62 @@ class Model:
         mapper.make_mapping()
         self.word_sec = mapper.get_word_sec()
         self.sec_word = mapper.get_sec_word()
-        self.seconds = sorted([time.sec for time in self.word_sec.values()])
+        self.seconds = [sorted(cur_sec_word.keys()) for cur_sec_word in self.sec_word]
         for wav_audio in wav_list:
             os.remove(wav_audio)
 
-        self.save_map(os.path.join(self.fb2_dir, 'mapinfo_' + self.fb2_name + '.xml'))
+        mapinfo_path = gen_path(['..', '..', self.fb2_dir, 'mapinfo_' + self.fb2_name + '.dat'])
+        with open(mapinfo_path, "wb") as file:
+            dill.dump(self.word_sec, file)
 
 
     def load_map(self):
         mapinfo_rel_path = self.root.find('mapinfo').text
-        mapinfo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', mapinfo_rel_path)
-        mapinfo_tree = etree.parse(mapinfo_path, etree.XMLParser(remove_blank_text=True))
-        map_root = mapinfo_tree.getroot()
-        self.word_sec = {}
+        mapinfo_path = gen_path(['..', '..', mapinfo_rel_path])
+        with open(mapinfo_path, "rb") as file:
+            self.word_sec = dill.load(file)
         self.sec_word = []
-        for elem in map_root.findall('elem'):
-            wordnum = int(elem.find('word').text)
-            audionum = int(elem.find('audio-num').text)
-            secnd = float(elem.find('sec').text)
-            self.word_sec.update([(wordnum, namedtuple('Time', ['audio_num', 'sec'])(audionum, secnd))])
-            if(len(self.sec_word) < audionum + 1):
+        self.seconds = []
+        for data in self.word_sec.items():
+            word = data[0]
+            sec = data[1].sec
+            audio_num = data[1].audio_num
+            while len(self.sec_word) < audio_num + 1:
                 self.sec_word.append({})
-            self.sec_word[audionum].update([(secnd, wordnum)])
-        self.seconds = sorted([time.sec for time in self.word_sec.values()])
+                self.seconds.append([])
+            self.sec_word[audio_num].update([(sec, word)])
+            self.seconds[audio_num].append(sec)
+        self.seconds = [sorted(cur_secs) for cur_secs in self.seconds]
 
+
+    def import_book(self, book_path, audio_paths):
+        book_name = book_path.split('/')[-1].replace('.fb2', '')
+        folder_path = gen_path(['..', '..', self.root_name, book_name])
+        if os.path.exists(folder_path):
+            shutil.rmtree(folder_path)
+        os.mkdir(folder_path)
+        shutil.copyfile(book_path, os.path.join(folder_path, book_name + '.fb2'))
+        for audio_path in audio_paths:
+            shutil.copyfile(audio_path, os.path.join(folder_path, audio_path.split('/')[-1]))
+        rel_folder_path = os.path.join(self.root_name, folder_path.split('/')[-1])
+        rel_book_path = os.path.join(rel_folder_path, book_name + '.fb2')
+        rel_audio_paths = [os.path.join(rel_folder_path, path.split('/')[-1]) for path in audio_paths]
+        self.make_atb(rel_book_path, book_name, rel_audio_paths, rel_folder_path, folder_path)
+
+
+    def make_atb(self, book_path, book_name, audio_paths, rel_folder_path, folder_path):
+        atb_root = etree.Element('atb')
+        fb2 = etree.SubElement(atb_root, 'fb2')
+        fb2.text = book_path
+        audio = etree.SubElement(atb_root, 'audio')
+        for audio_path in audio_paths:
+            file = etree.SubElement(audio, 'file')
+            file.text = audio_path
+        mapinfo = etree.SubElement(atb_root, 'mapinfo')
+        mapinfo.text = os.path.join(rel_folder_path, 'mapinfo_' + book_name + '.dat')
+
+        atb_tree = etree.ElementTree(atb_root)
+        atb_tree.write(os.path.join(folder_path, book_name + '_data' + '.atb'), pretty_print=True, xml_declaration=True, encoding='utf-8')
 
 
     def get_audio_list(self):
@@ -137,11 +163,11 @@ class Model:
 
 
     def get_sec(self, word):
-        return self.word_sec[word]
+        return self.word_sec.get(word, None)
 
 
     def get_word(self, audio_num, sec):
-        lb_sec_pos = bisect_left(self.seconds, sec)
-        near_sec = self.seconds[lb_sec_pos] if self.seconds[lb_sec_pos] == sec else self.seconds[lb_sec_pos - 1]
+        audio_secs = self.seconds[audio_num]
+        lb_sec_pos = bisect_left(audio_secs, sec)
+        near_sec = audio_secs[lb_sec_pos] if audio_secs[lb_sec_pos] == sec else audio_secs[lb_sec_pos - 1]
         return self.sec_word[audio_num][near_sec]
-
