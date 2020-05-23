@@ -9,6 +9,7 @@ from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ObjectProperty
+from kivymd import app
 from kivymd.app import MDApp
 from kivy.app import App
 from kivymd.toast import toast
@@ -31,13 +32,16 @@ from interface.audio_view import AudioView
 
 
 class Container(BoxLayout):
-    def __init__(self, **kwargs):
+    def __init__(self, change_theme, **kwargs):
         super().__init__(**kwargs)
-        
+        self.flag = True
+
         self.atb_model = None
         self.text_view = None
         self.audio_view = None
 
+        self.change_theme = change_theme
+        self.theme = 'Green'
         self.cur_ref = None
         self.vol_popup = self.VolumePopup()
         self.vol_popup.bind(volume=self.change_volume)
@@ -49,27 +53,95 @@ class Container(BoxLayout):
                                        size_hint=(0.15, 0.15), separator_color=[0, 0, 0, 1], title_size='0')
         self.file_popup = None
 
-        self.go_to_page_popup = Popup(title="Enter number of page",
-                                      content=self.GoToPage(func=self.go_to_page, close=self.close_go_to_page_popup),
-                                      size_hint=(0.2, 0.2), separator_color=[0, 0, 0, 1], title_size='0')
-
-        file_menu_items = [{"icon": "git", "text": f"Import book"}, {"icon": "git", "text": f"Open atb"}]
+        file_menu_items = [{"icon": "git", "text": f"Import book"}, {"icon": "git", "text": f"Open atb file"}]
         self.file_menu = MDDropdownMenu(
             caller=self.file_btn,
             items=file_menu_items,
             callback=self.set_item,
             width_mult=4,
         )
-        nav_menu_items = [{"icon": "git", "text": f"Go to Page"}, {"icon": "git", "text": f"Go to title"}]
+        nav_menu_items = [{"icon": "git", "text": f"Go to begin"}, {"icon": "git", "text": f"Go to end"},
+                          {"icon": "git", "text": f"Go to Page"}]
         self.nav_menu = MDDropdownMenu(
             caller=self.nav_btn,
             items=nav_menu_items,
             callback=self.nav_item,
             width_mult=4,
         )
+        font_menu_items = [{"icon": "git", "text": f"Font"}, {"icon": "git", "text": f"Font size"}]
+        self.font_menu = MDDropdownMenu(
+            caller=self.font_btn,
+            items=font_menu_items,
+            callback=self.font_item,
+            width_mult=4,
+        )
+        font_size_menu_items = [{"icon": "git", "text": f"Small"}, {"icon": "git", "text": f"Medium"},
+                                {"icon": "git", "text": f"High"}]
+        self.font_size_menu = MDDropdownMenu(
+            caller=self.font_btn,
+            items=font_size_menu_items,
+            callback=self.font_size_item,
+            width_mult=4,
+        )
+
+        font_change_menu_items = [{"icon": "git", "text": f"Roboto"}, {"icon": "git", "text": f"DejaVuSans"}]
+        self.font_change_menu = MDDropdownMenu(
+            caller=self.font_btn,
+            items=font_change_menu_items,
+            callback=self.font_change_item,
+            width_mult=4,
+        )
+
+        view_menu_items = [{"icon": "git", "text": f"Theme color"}, {"icon": "git", "text": f"Language"}]
+        self.view_menu = MDDropdownMenu(
+            caller=self.view_btn,
+            items=view_menu_items,
+            callback=self.view_item,
+            width_mult=4,
+        )
+
+        theme_menu_items = [{"icon": "git", "text": f"Green"}, {"icon": "git", "text": f"Blue"},
+                            {"icon": "git", "text": f"Dark"}]
+        self.theme_menu = MDDropdownMenu(
+            caller=self.view_btn,
+            items=theme_menu_items,
+            callback=self.theme_item,
+            width_mult=4,
+        )
+
+        lang_menu_items = [{"icon": "git", "text": f"English"}, {"icon": "git", "text": f"Русский"}]
+        self.lang_menu = MDDropdownMenu(
+            caller=self.view_btn,
+            items=lang_menu_items,
+            callback=self.lang_item,
+            width_mult=4,
+        )
+
+        self.go_to_page_dialog = MDDialog(
+            title="Enter the number of page",
+            type="custom",
+            content_cls=self.GoToPage(),
+            size_hint=[0.3, 0.5],
+            buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    on_release=self.dismiss_page_dialog
+                ),
+                MDRaisedButton(
+                    text="OK",
+                    on_release=self.go_to_page
+                ),
+            ],
+        )
 
         Clock.schedule_interval(self.file_menu.set_menu_properties, 0.1)
         Clock.schedule_interval(self.nav_menu.set_menu_properties, 0.1)
+        Clock.schedule_interval(self.font_menu.set_menu_properties, 0.1)
+        Clock.schedule_interval(self.font_size_menu.set_menu_properties, 0.1)
+        Clock.schedule_interval(self.font_change_menu.set_menu_properties, 0.1)
+        Clock.schedule_interval(self.view_menu.set_menu_properties, 0.1)
+        Clock.schedule_interval(self.theme_menu.set_menu_properties, 0.1)
+
         Window.bind(on_resize=self.on_resize_window)
 
         self.msg_dialog = None
@@ -79,6 +151,8 @@ class Container(BoxLayout):
         self.mutex = threading.Lock()
         self.progress = 0
         self.event2 = None
+        self.cs = [0.117, 0.053, 0.09, 0.042, 0.077, 0.035]
+        self.font_size = 0
 
     class Music(Sound):
         def __init__(self, file, *args, **kwargs):
@@ -94,14 +168,23 @@ class Container(BoxLayout):
         fb2_is_load = ObjectProperty(False)
         mp3_is_load = ObjectProperty(False)
         fb2_path = ObjectProperty(None)
+        theme = ObjectProperty(None)
 
         @staticmethod
         def get_path():
             return os.path.abspath(os.curdir)
 
-        @staticmethod
-        def get_color(name, num):
-            return get_color_from_hex(colors[name][num])
+        def get_color(self, flag):
+            if flag:
+                hue = "600"
+            else:
+                hue = "800"
+            if self.theme == 'Blue':
+                return get_color_from_hex(colors["Blue"][hue])
+            if self.theme == 'Green':
+                return get_color_from_hex(colors["Green"][hue])
+            if self.theme == 'Dark':
+                return get_color_from_hex(colors["Gray"][hue])
 
     class FileDialog(BoxLayout):
         import_book = ObjectProperty(None)
@@ -119,8 +202,7 @@ class Container(BoxLayout):
         color = ObjectProperty(None)
 
     class GoToPage(BoxLayout):
-        close = ObjectProperty(None)
-        func = ObjectProperty(None)
+        pass
 
     def change_text_r(self):
         if self.text_view:
@@ -172,6 +254,8 @@ class Container(BoxLayout):
         if self.atb_model:
             # self.audio_file.sound.stop()
             word_num = self.atb_model.get_word(self.audio_view.cur_audio, self.audio_view.audio_file.sound.get_pos())
+            if not word_num:
+                return
             ind = self.text_view.find_page(word_num)
             self.text_view.clean_word(ind)
             self.text_view.mark_word(ind, word_num)
@@ -190,13 +274,16 @@ class Container(BoxLayout):
     def go_to_pos_audio(self):
         self.go_to_audio_popup.dismiss()
         pos = self.atb_model.get_sec(self.cur_ref)
+        if not pos:
+            return
         self.audio_view.audio_file = self.audio_view.Music(self.audio_view.play_list[pos[0]])
         self.audio_view.audio_file.sound.seek(pos[1])
         self.time_label.text = self.audio_view.get_audio_len()
 
     def import_book(self):
         self.file_popup = Popup(title="Select .fb2 file", content=self.ChooseFile(select=self.select_fb2_mp3,
-                                                                                  cancel=self.dismiss_popup, ),
+                                                                                  cancel=self.dismiss_popup,
+                                                                                  theme=self.theme),
                                 size_hint=(0.5, 0.6), background='../images/back.jpg', title_color=[0, 0, 0, 1],
                                 title_align='center', separator_color=[1, 1, 1, 1])
         self.file_popup.content.select_button.text = 'Select .fb2 file'
@@ -205,7 +292,8 @@ class Container(BoxLayout):
 
     def open_atb_file(self):
         self.file_popup = Popup(title="Select .atb file", content=self.ChooseFile(select=self.select_atb,
-                                                                                  cancel=self.dismiss_popup, ),
+                                                                                  cancel=self.dismiss_popup,
+                                                                                  theme=self.theme),
                                 size_hint=(0.5, 0.6), background='../images/back.jpg', title_color=[0, 0, 0, 1],
                                 title_align='center', separator_color=[1, 1, 1, 1])
         self.file_popup.content.select_button.text = 'Select .atb file'
@@ -216,10 +304,9 @@ class Container(BoxLayout):
         if selection and selection[0].endswith('.atb'):
             self.dismiss_popup()
             self.loading_label.size_hint = [0.07, 1]
-            self.loading_label.text = "Loading..."
             self.spinner.color = [0, 0, 0, 1]
             self.spinner.active = True
-            x = threading.Thread(target=self.import_atb, args=(selection[0],))
+            x = threading.Thread(target=self.import_atb, args=(selection[0], True))
             x.start()
         else:
             self.show_msg('This is not .atb file')
@@ -248,22 +335,30 @@ class Container(BoxLayout):
                     for i in range(len(mp3s)):
                         mp3s[i] = path + '/' + mp3s[i]
                     self.dismiss_popup()
-                    x = threading.Thread(target=self.make_atb, args=(self.file_popup.content.fb2_path, mp3s))
+
+                    book_path = self.file_popup.content.fb2_path
+                    obj = Model()
+                    obj.import_book(book_path, mp3s)
+                    book_name = book_path.split('/')[-1].replace('.fb2', '')
+
+                    x = threading.Thread(target=self.load_book,
+                                         args=('../books/' + book_name + '/' + book_name + '_data' + '.atb',))
                     x.start()
-                    self.loading_label.size_hint = [0.07, 1]
-                    self.spinner.color = [0, 0, 0, 1]
-                    self.spinner.active = True
-                    self.event2 = Clock.schedule_interval(self.update_bar, 0.1)
 
             else:
                 self.show_msg('This is not a folder')
+
+    def load_book(self, path):
+        self.import_atb(path, False)
+        self.make_atb()
 
     def update_bar(self, dt):
         self.mutex.acquire()
         self.loading_label.text = 'Sync: ' + str(self.progress) + '%'
         self.mutex.release()
 
-    def make_atb(self, fb2_path, mp3_list):
+    def make_atb(self):
+        self.event2 = Clock.schedule_interval(self.update_bar, 0.1)
         for i in range(100):
             self.progress += 1
             time.sleep(0.2)
@@ -278,10 +373,16 @@ class Container(BoxLayout):
                 self.event.cancel()
             self.event = Clock.schedule_once(self.text_view.change_text, 0.3)
 
-    def import_atb(self, path):
+    def import_atb(self, path, flag):
+        self.loading_label.text = "Loading..."
+        self.loading_label.size_hint = [0.07, 1]
+        self.spinner.color = [0, 0, 0, 1]
+        self.spinner.active = True
+
         self.atb_model = Model()
         self.atb_model.load(path)
-        self.atb_model.load_map()
+        if flag:
+            self.atb_model.load_map()
 
         self.text_view = TextView(self.atb_model.get_text(), self.left_page, self.right_page)
         self.audio_view = AudioView(self.atb_model.get_audio_list(), self.music_button, self.time_label,
@@ -289,9 +390,10 @@ class Container(BoxLayout):
 
         self.move_slider()
         self.cur_ref = 0
-        self.loading_label.size_hint = [0.1, 1]
-        self.loading_label.text = "Done!"
-        self.spinner.active = False
+        if flag:
+            self.loading_label.size_hint = [0.1, 1]
+            self.loading_label.text = "Done!"
+            self.spinner.active = False
 
     def night_mode(self):
         if not self.night_mode_on:
@@ -341,22 +443,125 @@ class Container(BoxLayout):
         return get_color_from_hex(colors[name][num])
 
     def set_item(self, instance):
-        if instance.text == 'Open atb':
+        if instance.text == 'Open atb file':
             self.open_atb_file()
         else:
             self.import_book()
 
     def nav_item(self, instance):
-        if instance.text == 'Go to str':
-            self.go_to_page_popup.open()
-        else:
-            print('bbb')
+        if self.text_view:
+            if instance.text == 'Go to begin':
+                self.text_view.cur_page = 0
+                if len(self.text_view.pages) > 0:
+                    self.left_page.text = self.text_view.pages[0]
+                if len(self.text_view.pages) > 1:
+                    self.right_page.text = self.text_view.pages[1]
+            if instance.text == 'Go to end':
+                if len(self.text_view.pages) % 2 == 0:
+                    self.text_view.cur_page = len(self.text_view.pages) - 2
+                    self.left_page.text = self.text_view.pages[len(self.text_view.pages) - 2]
+                    self.right_page.text = self.text_view.pages[len(self.text_view.pages) - 1]
+                else:
+                    self.text_view.cur_page = len(self.text_view.pages) - 1
+                    self.left_page.text = self.text_view.pages[len(self.text_view.pages) - 1]
+                    self.right_page.text = ''
+            if instance.text == 'Go to Page':
+                self.nav_menu.dismiss()
+                self.go_to_page_dialog.content_cls.field.text = str(self.text_view.cur_page + 1)
+                self.go_to_page_dialog.content_cls.label.text = 'of ' + str(len(self.text_view.pages))
+                self.go_to_page_dialog.open()
 
-    def go_to_page(self, page):
-        cur = page - (page % 2)
-        self.text_view.cur_page = cur
+    def font_item(self, instance):
+        if instance.text == 'Font':
+            self.font_menu.dismiss()
+            self.font_change_menu.open()
+        else:
+            self.font_menu.dismiss()
+            self.font_size_menu.open()
+
+    def font_size_item(self, instance):
+        if instance.text == 'Small':
+            self.left_page.font_size = '16sp'
+            self.right_page.font_size = '16sp'
+            self.change_text(self.cs[0], self.cs[1])
+            self.font_size = 0
+        if instance.text == 'Medium':
+            self.left_page.font_size = '20sp'
+            self.right_page.font_size = '20sp'
+            self.change_text(self.cs[2], self.cs[3])
+            self.font_size = 1
+        if instance.text == 'High':
+            self.left_page.font_size = '24sp'
+            self.right_page.font_size = '24sp'
+            self.change_text(self.cs[4], self.cs[5])
+            self.font_size = 2
+
+    def font_change_item(self, instance):
+        if instance.text == 'Roboto':
+            self.left_page.font_name = 'fonts/Roboto-Regular'
+            self.right_page.font_name = 'fonts/Roboto-Regular'
+            self.cs = [0.117, 0.053, 0.09, 0.042, 0.077, 0.035]
+            self.change_text(self.cs[self.font_size * 2], self.cs[self.font_size * 2 + 1])
+        else:
+            self.left_page.font_name = 'fonts/DejaVuSans'
+            self.right_page.font_name = 'fonts/DejaVuSans'
+            self.cs = [0.105, 0.053, 0.085, 0.041, 0.07, 0.035]
+            self.change_text(self.cs[self.font_size * 2], self.cs[self.font_size * 2 + 1])
+
+    def change_text(self, c1, c2):
+        if self.text_view:
+            self.text_view.const1 = c1
+            self.text_view.const2 = c2
+            self.text_view.change_text(0)
+
+    def view_item(self, instance):
+        if instance.text == 'Theme color':
+            self.view_menu.dismiss()
+            self.theme_menu.open()
+        else:
+            self.view_menu.dismiss()
+            self.lang_menu.open()
+
+    def theme_item(self, instance):
+        if instance.text == 'Green':
+            self.change_theme('LightGreen', '300')
+            self.theme = 'Green'
+            self.up_bar.md_bg_color = self.get_color('LightGreen', '300')
+            self.play_layout.md_bg_color = self.get_color('LightGreen', '300')
+            self.slider.thumb_color_down = [0, 0, 0, 1]
+            self.vol_popup.slider_id.thumb_color_down = [0, 0, 0, 1]
+        if instance.text == 'Blue':
+            self.change_theme('LightBlue', '300')
+            self.theme = 'Blue'
+            self.up_bar.md_bg_color = self.get_color('LightBlue', '300')
+            self.play_layout.md_bg_color = self.get_color('LightBlue', '300')
+            self.slider.thumb_color_down = [0, 0, 0, 1]
+            self.vol_popup.slider_id.thumb_color_down = [0, 0, 0, 1]
+        if instance.text == 'Dark':
+            self.change_theme('Gray', '500')
+            self.theme = 'Dark'
+            self.up_bar.md_bg_color = self.get_color('Gray', '500')
+            self.play_layout.md_bg_color = self.get_color('Gray', '500')
+            self.slider.thumb_color_down = [0, 0, 0, 1]
+            self.vol_popup.slider_id.thumb_color_down = [0, 0, 0, 1]
+
+    def lang_item(self, instance):
+        pass
+
+    def go_to_page(self, instance):
+        page = int(self.go_to_page_dialog.content_cls.field.text) - 1
+        if page >= len(self.text_view.pages):
+            return
+
+        self.text_view.cur_page = page - (page % 2)
         self.left_page.text = self.text_view.pages[self.text_view.cur_page]
-        self.right_page.text = self.text_view.pages[self.text_view.cur_page + 1]
+        if self.text_view.cur_page + 1 < len(self.text_view.pages):
+            self.right_page.text = self.text_view.pages[self.text_view.cur_page + 1]
+        else:
+            self.right_page.text = ''
+
+    def dismiss_page_dialog(self, instance):
+        self.go_to_page_dialog.dismiss()
 
     def close_go_to_page_popup(self):
         self.go_to_page_popup.dismiss()

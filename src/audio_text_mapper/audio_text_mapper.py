@@ -8,6 +8,7 @@ import threading
 from numpy import linalg
 import math
 
+
 class ATMapper:
     def __init__(self, atb_mdl):
         self.mdl = atb_mdl
@@ -18,7 +19,7 @@ class ATMapper:
         self.last_chunk = self.Chunk('', 0)
         self.last_inv_speed = 0.4
 
-
+        
     def recognize_all(self):
         chunk_time = 10
         audio_num = 0
@@ -78,10 +79,9 @@ class ATMapper:
                 markup = self.map_segment(self.startp, math.ceil(self.startp + segm_dur * self.last_inv_speed), self.last_chunk.tstart, dur)
                 self.write_mapinfo(audio_num, markup)
 
-
+                
     def average_metrics(self, chunk, text_words):
         return mean([distance(chunk_word, text_word) for chunk_word, text_word in zip(chunk, text_words)])
-
 
     def chunk_search(self, chunk, startp, endp):
         endp = endp - len(chunk) + 1
