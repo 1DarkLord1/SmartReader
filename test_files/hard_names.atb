@@ -18,5 +18,5 @@
 	<file>120DWS.mp3</file>
 	<file>DDS.mp3</file>
 </audio>
-<mapinfo>test_files/mapinfo_book1.xml</mapinfo>
+<mapinfo>test_files/mapinfo_book1.dat</mapinfo>
 </atb>

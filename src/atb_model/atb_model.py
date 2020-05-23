@@ -9,7 +9,6 @@ def gen_path(paths):
         full_path = os.path.join(full_path, path)
     return full_path
 
-
 sys.path.append(gen_path(['..', 'audio_text_mapper']))
 
 import dill
@@ -20,6 +19,8 @@ from bisect import bisect_left
 from collections import namedtuple
 from audio_text_mapper import ATMapper
 import shutil
+import threading
+
 
 
 class Model:
@@ -34,11 +35,16 @@ class Model:
         self.text = None
         self.word_list = None
         self.audio_list = None
+        self.wav_list = None
+        self.durs = None
 
         self.word_sec = None
         self.sec_word = None
         self.seconds = None
 
+        self.mutex = threading.Lock()
+        
+        
     def get_fb2_root(self, fb2_path):
         fb2_path = gen_path(['..', '..', fb2_path])
         fb2_tree = etree.parse(fb2_path, etree.XMLParser(remove_blank_text=True))
@@ -48,6 +54,7 @@ class Model:
         etree.cleanup_namespaces(fb2_root)
         return fb2_root
 
+      
     def load_text(self):
         book_path = self.root.find('fb2').text
         fb2_root = self.get_fb2_root(book_path)
@@ -55,14 +62,17 @@ class Model:
         repl_cltag = '#~?$'
         self.text = re.sub('<.*?>', '', re.sub('</.*?>', repl_cltag, raw_text)).replace(repl_cltag, '\n')
 
+        
     def make_word_list(self):
         self.word_list = [''.join(list(filter(lambda ch: ch.isalpha() or ch == '-' or ch.isdigit(), word))).lower()
                           for word in re.split(' |\n', self.text)]
         self.word_list = list(filter(lambda word: word != "", self.word_list))
 
+        
     def parse_audio_list(self):
         audio = self.root.find('audio')
         self.audio_list = [gen_path(['..', '..', file.text]) for file in audio.findall('file')]
+        
 
     def load(self, path):
         self.tree = etree.parse(path, etree.XMLParser(remove_blank_text=True))
@@ -73,28 +83,31 @@ class Model:
         self.make_word_list()
         self.parse_audio_list()
 
+        
     def create_wav_from_mp3(self, audio_path):
         source = AudioSegment.from_mp3(audio_path)
         source.export(audio_path.replace('mp3', 'wav'), format='wav')
         return int(source.duration_seconds)
 
+      
     def make_mapping(self):
-        durs = []
+        self.durs = []
         for audio in self.audio_list:
-            durs.append(self.create_wav_from_mp3(audio))
+            self.durs.append(self.create_wav_from_mp3(audio))
 
-        wav_list = list(map(lambda audio_path: audio_path.replace('mp3', 'wav'), self.audio_list))
-        mapper = ATMapper(self.word_list, wav_list, durs)
-        mapper.make_mapping()
-        self.word_sec = mapper.get_word_sec()
-        self.sec_word = mapper.get_sec_word()
-        self.seconds = [sorted(cur_sec_word.keys()) for cur_sec_word in self.sec_word]
+        self.wav_list = list(map(lambda audio_path: audio_path.replace('mp3', 'wav'), self.audio_list))
+        mapper = ATMapper(self)
+        self.word_sec = {}
+        self.sec_word = [{} for i in range(len(self.audio_list))]
+        self.seconds = [[] for i in range(len(self.audio_list))]
+        mapper.recognize_all()
+
         for wav_audio in wav_list:
             os.remove(wav_audio)
-
         mapinfo_path = gen_path(['..', '..', self.fb2_dir, 'mapinfo_' + self.fb2_name + '.dat'])
         with open(mapinfo_path, "wb") as file:
             dill.dump(self.word_sec, file)
+           
 
     def load_map(self):
         mapinfo_rel_path = self.root.find('mapinfo').text
@@ -114,6 +127,7 @@ class Model:
             self.seconds[audio_num].append(sec)
         self.seconds = [sorted(cur_secs) for cur_secs in self.seconds]
 
+
     def import_book(self, book_path, audio_paths):
         book_name = book_path.split('/')[-1].replace('.fb2', '')
         folder_path = gen_path(['..', '..', self.root_name, book_name])
@@ -128,6 +142,7 @@ class Model:
         rel_audio_paths = [os.path.join(rel_folder_path, path.split('/')[-1]) for path in audio_paths]
         self.make_atb(rel_book_path, book_name, rel_audio_paths, rel_folder_path, folder_path)
 
+
     def make_atb(self, book_path, book_name, audio_paths, rel_folder_path, folder_path):
         atb_root = etree.Element('atb')
         fb2 = etree.SubElement(atb_root, 'fb2')
@@ -140,30 +155,36 @@ class Model:
         mapinfo.text = os.path.join(rel_folder_path, 'mapinfo_' + book_name + '.dat')
 
         atb_tree = etree.ElementTree(atb_root)
-        atb_tree.write(os.path.join(folder_path, book_name + '_data' + '.atb'), pretty_print=True, xml_declaration=True,
-                       encoding='utf-8')
+        atb_tree.write(os.path.join(folder_path, book_name + '_data' + '.atb'), pretty_print=True, xml_declaration=True, encoding='utf-8')
 
+        
     def get_audio_list(self):
         return self.audio_list
 
+      
     def get_text(self):
         return self.text
 
+      
     def get_word_list(self):
         return self.word_list
 
+      
     def get_sec(self, word):
-        if self.word_sec:
-            return self.word_sec.get(word, None)
-        else:
-            return None
+        self.mutex.acquire()
+        sec = self.word_sec.get(word, None)
+        self.mutex.release()
+        return sec
+
 
     def get_word(self, audio_num, sec):
-        if self.sec_word:
-            audio_secs = self.seconds[audio_num]
-            lb_sec_pos = bisect_left(audio_secs, sec)
-            near_sec = audio_secs[lb_sec_pos] if audio_secs[lb_sec_pos] == sec else audio_secs[lb_sec_pos - 1]
-            return self.sec_word[audio_num][near_sec]
-        else:
+        self.mutex.acquire()
+        audio_secs = self.seconds[audio_num]
+        if len(audio_secs) == 0 or bisect_left(audio_secs, sec) == len(audio_secs):
+            self.mutex.release()
             return None
-
+        lb_sec_pos = bisect_left(audio_secs, sec)
+        near_sec = audio_secs[lb_sec_pos] if audio_secs[lb_sec_pos] == sec else audio_secs[lb_sec_pos - 1]
+        word = self.sec_word[audio_num][near_sec]
+        self.mutex.release()
+        return word

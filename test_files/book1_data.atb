@@ -4,5 +4,5 @@
 <audio>
 	<file>test_files/book1.mp3</file>
 </audio>
-<mapinfo>test_files/mapinfo_book1.xml</mapinfo>
+<mapinfo>test_files/mapinfo_book1.dat</mapinfo>
 </atb>
