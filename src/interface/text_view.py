@@ -8,6 +8,8 @@ class TextView:
 
         self.text = text
         self.last_words = None
+        self.const1 = 0.117
+        self.const2 = 0.053
         self.pages = self.slice_pages(text)
         self.cur_page = 0
 
@@ -26,11 +28,30 @@ class TextView:
             self.words_in_str = p1
             self.num_of_str = p2
 
-        def add_str_to_list(self, s, cnt):
+        def find_pos(self, space_pos, enter_pos):
+            if space_pos == -1 and enter_pos == -1:
+                return -1
+            if space_pos == -1:
+                return enter_pos
+            if enter_pos == -1:
+                return space_pos
+            return min(space_pos, enter_pos)
+
+        def add_str_to_list(self, text, i, cnt):
             self.str_len += 1
-            if (self.str_len >= self.words_in_str and s == ' ') or s == '\n':
+
+            if text[i] == ' ':
+                space_pos = text[i + 1:i + 30].find(' ')
+                enter_pos = text[i + 1:i + 30].find('\n')
+                pos = self.find_pos(space_pos, enter_pos)
+            else:
+                pos = 0
+
+            if (text[i] == ' ' and pos + self.str_len >= self.words_in_str) or text[i] == '\n':
                 self.cnt_str += 1
                 self.str_len = 0
+                if text[i] != '\n':
+                    self.page += '\n'
             if self.cnt_str >= self.num_of_str:
                 self.cnt_str = 0
                 self.pages.append(self.page)
@@ -41,11 +62,14 @@ class TextView:
         cnt = 0
         beg = 0
         end = 0
-        words_in_str = int((Window.width - 40) * 0.055)
-        num_str = int((Window.height - 40) * 0.04758)
+        words_in_str = int((Window.width * 0.995 * 0.5 - 20) * self.const1)
+        num_str = int((Window.height * 0.88 - 20) * self.const2)
         slicer = self.Slicer(words_in_str, num_str)
         while end < len(data):
             s = data[end]
+            text = data
+            index = end
+
             if data[end] == ' ' or data[end] == '\n':
                 if beg != end:
                     word = data[beg:end]
@@ -56,7 +80,7 @@ class TextView:
                 beg = end
             else:
                 end += 1
-            slicer.add_str_to_list(s, cnt)
+            slicer.add_str_to_list(text, index, cnt)
         slicer.pages.append(slicer.page)
         self.last_words = slicer.last_words
         return slicer.pages
@@ -89,7 +113,7 @@ class TextView:
             self.left_page.text = self.pages[self.cur_page - 2]
             self.right_page.text = self.pages[self.cur_page - 1]
             self.cur_page -= 2
-            
+
     def change_text(self, dt):
         if self.cur_page == 0:
             num_of_first_word = 0
@@ -100,7 +124,7 @@ class TextView:
         self.cur_page -= self.cur_page % 2
         self.left_page.text = self.pages[self.cur_page]
         self.right_page.text = self.pages[self.cur_page + 1]
-        
+
     def clean_word(self, ind):
         if self.pages[ind].find('[/color]') != -1:
             self.pages[ind] = self.pages[ind].replace('[/color][/b]', '')
