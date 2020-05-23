@@ -11,3 +11,4 @@ pip3 install pydub
 pip3 install ffmpeg-python
 pip3 install python-Levenshtein
 pip3 install dill
+pip3 install numpy
