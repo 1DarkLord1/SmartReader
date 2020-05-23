@@ -102,7 +102,7 @@ class Model:
         self.seconds = [[] for i in range(len(self.audio_list))]
         mapper.recognize_all()
 
-        for wav_audio in wav_list:
+        for wav_audio in self.wav_list:
             os.remove(wav_audio)
         mapinfo_path = gen_path(['..', '..', self.fb2_dir, 'mapinfo_' + self.fb2_name + '.dat'])
         with open(mapinfo_path, "wb") as file:
