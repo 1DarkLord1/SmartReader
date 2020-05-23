@@ -2,6 +2,7 @@
 
 import sys, os
 
+<<<<<<< HEAD
 
 def gen_path(paths):
     full_path = os.path.dirname(os.path.abspath(__file__))
@@ -10,6 +11,14 @@ def gen_path(paths):
     return full_path
 
 
+=======
+def gen_path(paths):
+    full_path = os.path.dirname(os.path.abspath(__file__))
+    for path in paths:
+        full_path = os.path.join(full_path, path)
+    return full_path
+
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
 sys.path.append(gen_path(['..', 'audio_text_mapper']))
 
 import dill
@@ -20,7 +29,10 @@ from bisect import bisect_left
 from collections import namedtuple
 from audio_text_mapper import ATMapper
 import shutil
+<<<<<<< HEAD
 
+=======
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
 
 class Model:
     def __init__(self):
@@ -62,7 +74,12 @@ class Model:
 
     def parse_audio_list(self):
         audio = self.root.find('audio')
+<<<<<<< HEAD
         self.audio_list = [gen_path(['..', '..', file.text]) for file in audio.findall('file')]
+=======
+        self.audio_list = [gen_path(['..', '..',file.text]) for file in audio.findall('file')]
+
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
 
     def load(self, path):
         self.tree = etree.parse(path, etree.XMLParser(remove_blank_text=True))
@@ -78,6 +95,10 @@ class Model:
         source.export(audio_path.replace('mp3', 'wav'), format='wav')
         return int(source.duration_seconds)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
     def make_mapping(self):
         durs = []
         for audio in self.audio_list:
@@ -95,6 +116,10 @@ class Model:
         mapinfo_path = gen_path(['..', '..', self.fb2_dir, 'mapinfo_' + self.fb2_name + '.dat'])
         with open(mapinfo_path, "wb") as file:
             dill.dump(self.word_sec, file)
+<<<<<<< HEAD
+=======
+
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
 
     def load_map(self):
         mapinfo_rel_path = self.root.find('mapinfo').text
@@ -114,6 +139,10 @@ class Model:
             self.seconds[audio_num].append(sec)
         self.seconds = [sorted(cur_secs) for cur_secs in self.seconds]
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
     def import_book(self, book_path, audio_paths):
         book_name = book_path.split('/')[-1].replace('.fb2', '')
         folder_path = gen_path(['..', '..', self.root_name, book_name])
@@ -128,6 +157,10 @@ class Model:
         rel_audio_paths = [os.path.join(rel_folder_path, path.split('/')[-1]) for path in audio_paths]
         self.make_atb(rel_book_path, book_name, rel_audio_paths, rel_folder_path, folder_path)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
     def make_atb(self, book_path, book_name, audio_paths, rel_folder_path, folder_path):
         atb_root = etree.Element('atb')
         fb2 = etree.SubElement(atb_root, 'fb2')
@@ -140,8 +173,13 @@ class Model:
         mapinfo.text = os.path.join(rel_folder_path, 'mapinfo_' + book_name + '.dat')
 
         atb_tree = etree.ElementTree(atb_root)
+<<<<<<< HEAD
         atb_tree.write(os.path.join(folder_path, book_name + '_data' + '.atb'), pretty_print=True, xml_declaration=True,
                        encoding='utf-8')
+=======
+        atb_tree.write(os.path.join(folder_path, book_name + '_data' + '.atb'), pretty_print=True, xml_declaration=True, encoding='utf-8')
+
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
 
     def get_audio_list(self):
         return self.audio_list
@@ -153,6 +191,7 @@ class Model:
         return self.word_list
 
     def get_sec(self, word):
+<<<<<<< HEAD
         if self.word_sec:
             return self.word_sec.get(word, None)
         else:
@@ -166,3 +205,13 @@ class Model:
             return self.sec_word[audio_num][near_sec]
         else:
             return None
+=======
+        return self.word_sec.get(word, None)
+
+
+    def get_word(self, audio_num, sec):
+        audio_secs = self.seconds[audio_num]
+        lb_sec_pos = bisect_left(audio_secs, sec)
+        near_sec = audio_secs[lb_sec_pos] if audio_secs[lb_sec_pos] == sec else audio_secs[lb_sec_pos - 1]
+        return self.sec_word[audio_num][near_sec]
+>>>>>>> b59c3828fab8b5af9414752cdb531e8bddbd02b5
