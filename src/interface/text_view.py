@@ -65,16 +65,25 @@ class TextView:
         words_in_str = int((Window.width * 0.995 * 0.5 - 20) * self.const1)
         num_str = int((Window.height * 0.88 - 20) * self.const2)
         slicer = self.Slicer(words_in_str, num_str)
+
         while end < len(data):
             s = data[end]
             text = data
             index = end
 
-            if data[end] == ' ' or data[end] == '\n':
+            if data[end] == ' ' or data[end] == '\n' or ord(data[end]) == 160:
                 if beg != end:
                     word = data[beg:end]
-                    slicer.page += "[ref={}]{}[/ref]".format(str(cnt), word)
-                    cnt += 1
+                    flag = True
+                    if len(word) == 1 and (ord(word) == 8211 or word == '-'):
+                        flag = False
+
+                    if flag:
+                        slicer.page += "[ref={}]{}[/ref]".format(str(cnt), word)
+                        cnt += 1
+                    else:
+                        slicer.page += word
+
                 slicer.page += data[end]
                 end += 1
                 beg = end
