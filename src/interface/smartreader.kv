@@ -26,18 +26,20 @@
 
 <VolumePopup>:
     volume: slider_id.value
+    slider_id: slider_id
     size_hint: (0.3, 0.1)
     pos_hint: {'right': 1, 'top': 0.16}
     title: "  Volume: " + str(slider_id.value)
 
     MDSlider:
+        id: slider_id
         min: 0
         max: 100
         step: 1
         value: 100
-        thumb_color_down: 0, 0, 0, 1
         hint: False
-        id: slider_id
+        thumb_color_down: 0, 0, 0, 1
+
 
 <GoToAudio>:
     MDRectangleFlatIconButton:
@@ -51,33 +53,22 @@
             root.func()
 
 <GoToPage>:
-    orientation: 'vertical'
-    FloatLayout:
-        size_hint: 1, 0.5
-        MDTextField:
-            pos_hint: {'right': 0.5, 'top': 1}
-            size_hint: 0.5, 1
-            halign: 'center'
-            valign: 'center'
-            multiline: False
-            text: '12'
-        Label:
-            pos_hint: {'right': 1, 'top': 1}
-            size_hint: 0.5, 1
-            text: 'of 123'
-            halign: 'center'
+    field: field
+    label: label
+    orientation: "vertical"
+    spacing: "12dp"
+    size_hint_y: None
+    height: "120dp"
 
-    FloatLayout:
-        size_hint: 1, 0.5
-        MDRaisedButton:
-            pos_hint: {'right': 0.5, 'top': 1}
-            size_hint: 0.5, 1
-            text: 'Cancel'
-        MDRaisedButton:
-            pos_hint: {'right': 1, 'top': 1}
-            size_hint: 0.5, 1
-            text: 'Ok'
+    MDTextField:
+        id: field
+        hint_text: "Page"
+        line_color_focus: 0, 0, 0, 1
+        input_filter: 'int'
 
+
+    MDLabel:
+        id: label
 
 
 
@@ -86,7 +77,7 @@
     filechooser: filechooser
     canvas.before:
         Color:
-            rgba: root.get_color('Green', '600')
+            rgba: root.get_color(True)
         Rectangle:
             pos: self.pos
             size: self.size
@@ -105,7 +96,7 @@
             MDRaisedButton:
                 text: "Cancel"
                 md_bg_color:
-                    root.get_color('Green', '900')
+                    root.get_color(False)
                 text_color: 1, 1 ,1 ,1
                 pos_hint: {'right': 0.5, 'top': 1}
                 size_hint: 0.5, 1
@@ -115,7 +106,7 @@
                 id: select_button
                 text: "Select Folder"
                 md_bg_color:
-                    root.get_color('Green', '900')
+                    root.get_color(False)
                 text_color: 1, 1 ,1 ,1
                 pos_hint: {'right': 1, 'top': 1}
                 size_hint: 0.5, 1
@@ -155,17 +146,27 @@
     music_button: music_button
     slider: slider
     time_label: time_label
-    view: view
+    view_btn: view_btn
     play_layout: play_layout
     file_btn: file_btn
     volume_btn: volume_btn
     loading_label: loading_label
     spinner: spinner
     nav_btn: nav_btn
+    font_btn: font_btn
+    up_bar: up_bar
+    bmarks_btn: bmarks_btn
+    night_btn: night_btn
+    prev_page_btn: prev_page_btn
+    next_page_btn: next_page_btn
+    prev_audio_btn: prev_audio_btn
+    next_audio_btn: next_page_btn
+    go_to_book_btn: go_to_book_btn
 
 
     orientation: 'vertical'
     MDFloatLayout:
+        id: up_bar
         size_hint: 1, 0.06
         md_bg_color:
             root.get_color('LightGreen', '300')
@@ -181,12 +182,14 @@
                 root.file_menu.open()
 
         MDRectangleFlatIconButton:
-            id: view
+            id: view_btn
             pos_hint: {'right': 0.25, 'top': 1}
             size_hint: 0.125, 1
             text_color: 0, 0, 0, 1
             icon: 'view-agenda'
             text: 'View'
+            on_release:
+                root.view_menu.open()
 
 
         MDRectangleFlatIconButton:
@@ -196,10 +199,13 @@
             text: 'Navigation'
             text_color: 0, 0, 0, 1
             icon: 'book-search'
+            on_release:
+                root.nav_menu.open()
 
 
 
         MDRectangleFlatIconButton:
+            id: bmarks_btn
             pos_hint: {'right': 0.5, 'top': 1}
             size_hint: 0.125, 1
             text_color: 0, 0, 0, 1
@@ -207,13 +213,17 @@
             text: 'Bookmarks'
 
         MDRectangleFlatIconButton:
+            id: font_btn
             pos_hint: {'right': 0.625, 'top': 1}
             size_hint: 0.125, 1
             icon: 'format-font'
             text_color: 0, 0, 0, 1
             text: 'Font'
+            on_release:
+                root.font_menu.open()
 
         MDRectangleFlatIconButton:
+            id: night_btn
             pos_hint: {'right': 0.75, 'top': 1}
             size_hint: 0.125, 1
             icon: 'weather-night'
@@ -223,6 +233,7 @@
                 root.night_mode()
 
         MDRectangleFlatIconButton:
+            id: prev_page_btn
             pos_hint: {'right': 0.875, 'top': 1}
             size_hint: 0.125, 1
             icon: 'arrow-left'
@@ -232,6 +243,7 @@
                 root.change_text_l()
 
         MDRectangleFlatIconButton:
+            id: next_page_btn
             pos_hint: {'right': 1, 'top': 1}
             size_hint: 0.125, 1
             icon: 'arrow-right'
@@ -251,6 +263,7 @@
             id: left_page
             markup: True
             text: 'Hello! This is SmartReader\nPress File button to import new book or open atb file'
+            font_name: 'fonts/Roboto-Regular'
             on_ref_press:
                 root.ref_press(*args)
             text_size: self.size
@@ -265,6 +278,7 @@
         BackgroundLabel:
             id: right_page
             markup: True
+            font_name: 'fonts/Roboto-Regular'
             on_ref_press:
                 root.ref_press(*args)
             text_size: self.size
@@ -278,6 +292,7 @@
         md_bg_color:
             root.get_color('LightGreen', '300')
         MDIconButton:
+            id: prev_audio_btn
             pos_hint: {'right': 0.09, 'top': 1}
             size_hint: 0.09, 1
             icon: 'skip-previous'
@@ -297,6 +312,7 @@
 
 
         MDIconButton:
+            id: next_audio_btn
             pos_hint: {'right': 0.27, 'top': 1}
             size_hint: 0.09, 1
             icon: 'skip-next'
@@ -340,6 +356,7 @@
 
 
         MDRectangleFlatIconButton:
+            id: go_to_book_btn
             pos_hint: {'right': 0.9, 'top': 1}
             size_hint: 0.1, 1
             icon: 'book-open'
