@@ -12,4 +12,6 @@
 #### To run main program enter:
 ```python3 src/main.py```
 #### To run ticker enter:
-```python3 src/main.py test_files/book1_data.atb test```
+```python3 src/main.py books/book1/book1_data.atb test``
+or python3 src/main.py books/azaza/azaza_data.atb test
+`
