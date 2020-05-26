@@ -67,11 +67,16 @@ class Model:
 
         word_l = self.text.split()
         self.word_list = []
-        for i in range(len(word_l)):
-            word_l[i] = re.sub('[.,!?:;]', '', word_l[i])
-            if len(word_l[i]) == 1 and (ord(word_l[i]) == 8211 or word_l[i] == '-'):
-                continue
-            self.word_list.append(word_l[i].lower())
+
+        #for i in range(len(word_l)):
+         #   word_l[i] = re.sub('[.,!?:;]', '', word_l[i])
+          #  if len(word_l[i]) == 1 and (ord(word_l[i]) == 8211 or word_l[i] == '-' or ord(word_l[i]) == 8212 or word_l[i] == '*'):
+           #     continue
+            #self.word_list.append(word_l[i].lower())
+        for word in word_l:
+            new_word = ''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
+            if new_word != '':
+                self.word_list.append(new_word)
 
     def parse_audio_list(self):
         audio = self.root.find('audio')

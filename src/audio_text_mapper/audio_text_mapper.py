@@ -23,7 +23,7 @@ class ATMapper:
         self.start = None
 
     def recognize_all(self):
-        chunk_time = 10
+        chunk_time = 15
         audio_num = 0
         for dur, audio_path in zip(self.mdl.durs, self.mdl.wav_list):
             self.recognize(audio_path, audio_num, dur, chunk_time)
@@ -34,24 +34,34 @@ class ATMapper:
         audio = sr.AudioFile(audio_path)
         start_time = 0
         with audio as source:
-            recorded = rec.record(source, duration=chunk_time + 5)
+            recorded = rec.record(source, duration=chunk_time)
             recognized = ''
             try:
                 recognized = rec.recognize_google(recorded, language='ru-RU')
             except Exception as e:
                 pass
 
-            chunk_words = list(map(lambda word: word.lower(), recognized.split(' ')))
+            #chunk_words = list(map(lambda word: word.lower(), recognized.split(' ')))
+
+            word_l = recognized.split()
+            chunk_words = []
+            for word in word_l:
+                new_word = ''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
+                if new_word != '':
+                    chunk_words.append(new_word)
+
+            # print(chunk_words)
+
             recognized_chunk = self.Chunk(chunk_words, start_time)
-            
 
             self.start = self.chunk_find(recognized_chunk, self.startp)
             end = self.start + len(recognized_chunk.text)
-            segment_markup = self.map_segment(self.start, end, 0, chunk_time + 5)
+            segment_markup = self.map_segment(self.start, end, 0, chunk_time)
             self.write_mapinfo(audio_num, segment_markup)
             return end
 
     def recognize(self, audio_path, audio_num, dur, chunk_time):
+        print(audio_num)
         self.startp = self.get_startp(audio_path, audio_num, chunk_time)
         # div_coef = 2
         # pow_coef = 1 / 3
@@ -69,7 +79,7 @@ class ATMapper:
         rec = sr.Recognizer()
         audio = sr.AudioFile(audio_path)
         last_failed = False
-        self.last_chunk = self.Chunk('', chunk_time + 5)
+        self.last_chunk = self.Chunk('', chunk_time)
         with audio as source:
             rec.adjust_for_ambient_noise(source)
             for time in range(fragm_step, dur + 1, fragm_step):
@@ -85,7 +95,16 @@ class ATMapper:
                     if time == dur:
                         last_failed = True
                     continue
-                chunk_words = list(map(lambda word: word.lower(), recognized.split(' ')))
+                #chunk_words = list(map(lambda word: word.lower(), recognized.split(' ')))
+
+                word_l = recognized.split()
+                chunk_words = []
+                for word in word_l:
+                    new_word = ''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
+                    if new_word != '':
+                        chunk_words.append(new_word)
+
+                # print(chunk_words)
                 recognized_chunk = self.Chunk(chunk_words, start_time)
                 self.make_mapping(recognized_chunk, audio_num, dur, time)
 
@@ -104,7 +123,7 @@ class ATMapper:
         return min(matches, key=lambda match: match[1])[0]
 
     def map_segment(self, start_pos, end_pos, start_time, end_time):
-        
+        print(start_pos, end_pos, ' : ', start_time, end_time)
         dur = end_time - start_time
         syll_cnt = [0]
         symbs = {'а', 'о', 'е', 'и', 'ы', 'у', 'э', 'ё', 'я', 'ю', '.', '?', '!'}

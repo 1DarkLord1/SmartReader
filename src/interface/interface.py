@@ -92,7 +92,7 @@ class Container(BoxLayout):
             width_mult=4,
         )
 
-        view_menu_items = [{"icon": "git", "text": f"Theme color"}, {"icon": "git", "text": f"Language"}]
+        view_menu_items = [{"icon": "git", "text": f"Theme color"}]
         self.view_menu = MDDropdownMenu(
             caller=self.view_btn,
             items=view_menu_items,
@@ -246,6 +246,7 @@ class Container(BoxLayout):
 
     def ref_press(self, instance, ref):
         self.cur_ref = int(ref)
+        print(ref, self.atb_model.word_list[self.cur_ref])
 
         ind = self.text_view.find_page(self.cur_ref)
         if not self.text_view.clean_word(ind):
@@ -348,7 +349,7 @@ class Container(BoxLayout):
                     book_name = book_path.split('/')[-1].replace('.fb2', '')
 
                     x = threading.Thread(target=self.load_book,
-                                         args=('books/' + book_name + '/' + book_name + '_data' + '.atb',))
+                                         args=('../books/' + book_name + '/' + book_name + '_data' + '.atb',))
                     x.start()
 
             else:
@@ -396,6 +397,7 @@ class Container(BoxLayout):
 
         self.move_slider()
         self.cur_ref = 0
+        
 
         if flag:
             self.loading_label.size_hint = [0.1, 1]

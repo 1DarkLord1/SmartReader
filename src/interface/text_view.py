@@ -1,3 +1,5 @@
+import string
+
 from kivy.core.window import Window
 
 
@@ -71,11 +73,16 @@ class TextView:
             text = data
             index = end
 
-            if data[end] == ' ' or data[end] == '\n' or ord(data[end]) == 160:
+            if data[end] in string.whitespace:
                 if beg != end:
                     word = data[beg:end]
                     flag = True
-                    if len(word) == 1 and (ord(word) == 8211 or word == '-'):
+                    new_word = ''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
+
+                    #if len(word) == 1 and (ord(word) == 8211 or word == '-' or ord(word) == 8212 or word == '*'):
+                     #   flag = False
+
+                    if new_word == '':
                         flag = False
 
                     if flag:
