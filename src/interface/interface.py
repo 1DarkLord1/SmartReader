@@ -349,7 +349,7 @@ class Container(BoxLayout):
                     book_name = book_path.split('/')[-1].replace('.fb2', '')
 
                     x = threading.Thread(target=self.load_book,
-                                         args=('../books/' + book_name + '/' + book_name + '_data' + '.atb',))
+                                         args=('books/' + book_name + '/' + book_name + '_data' + '.atb',))
                     x.start()
 
             else:
@@ -357,7 +357,7 @@ class Container(BoxLayout):
 
     def load_book(self, path):
         self.import_atb(path, False)
-        self.make_mapping()
+        #self.make_mapping()
 
     def update_bar(self, dt):
         self.mutex.acquire()
