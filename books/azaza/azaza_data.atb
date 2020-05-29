@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<atb>
+  <fb2>books/azaza/azaza.fb2</fb2>
+  <audio>
+    <file>books/azaza/01.mp3</file>
+    <file>books/azaza/02.mp3</file>
+    <file>books/azaza/03.mp3</file>
+    <file>books/azaza/04.mp3</file>
+    <file>books/azaza/05.mp3</file>
+    <file>books/azaza/06.mp3</file>
+    <file>books/azaza/07.mp3</file>
+    <file>books/azaza/08.mp3</file>
+    <file>books/azaza/09.mp3</file>
+    <file>books/azaza/10.mp3</file>
+    <file>books/azaza/11.mp3</file>
+    <file>books/azaza/12.mp3</file>
+    <file>books/azaza/13.mp3</file>
+    <file>books/azaza/14.mp3</file>
+    <file>books/azaza/15.mp3</file>
+    <file>books/azaza/16.mp3</file>
+    <file>books/azaza/17.mp3</file>
+  </audio>
+  <mapinfo>books/azaza/mapinfo_azaza.dat</mapinfo>
+</atb>

@@ -92,7 +92,7 @@ class Container(BoxLayout):
             width_mult=4,
         )
 
-        view_menu_items = [{"icon": "git", "text": f"Theme color"}, {"icon": "git", "text": f"Language"}]
+        view_menu_items = [{"icon": "git", "text": f"Theme color"}]
         self.view_menu = MDDropdownMenu(
             caller=self.view_btn,
             items=view_menu_items,
@@ -246,6 +246,8 @@ class Container(BoxLayout):
 
     def ref_press(self, instance, ref):
         self.cur_ref = int(ref)
+        print(ref, self.atb_model.word_list[self.cur_ref])
+
         ind = self.text_view.find_page(self.cur_ref)
         if not self.text_view.clean_word(ind):
             self.go_to_audio_popup.open()
@@ -253,7 +255,8 @@ class Container(BoxLayout):
     def go_to_book(self):
         if self.atb_model:
             # self.audio_file.sound.stop()
-            word_num = self.atb_model.get_word(self.audio_view.cur_audio, self.audio_view.audio_file.sound.get_pos())
+            word_num = self.atb_model.get_word(self.audio_view.cur_audio,
+                                               self.audio_view.audio_file.sound.get_pos())
             if not word_num:
                 return
             ind = self.text_view.find_page(word_num)
@@ -276,7 +279,11 @@ class Container(BoxLayout):
         pos = self.atb_model.get_sec(self.cur_ref)
         if not pos:
             return
-        self.audio_view.audio_file = self.audio_view.Music(self.audio_view.play_list[pos[0]])
+
+        if pos[0] != self.audio_view.cur_audio:
+            self.audio_view.audio_file.sound.unload()
+            self.audio_view.cur_audio = pos[0]
+            self.audio_view.audio_file = self.Music(self.audio_view.play_list[pos[0]])
         self.audio_view.audio_file.sound.seek(pos[1])
         self.time_label.text = self.audio_view.get_audio_len()
 
@@ -342,7 +349,7 @@ class Container(BoxLayout):
                     book_name = book_path.split('/')[-1].replace('.fb2', '')
 
                     x = threading.Thread(target=self.load_book,
-                                         args=('../books/' + book_name + '/' + book_name + '_data' + '.atb',))
+                                         args=('books/' + book_name + '/' + book_name + '_data' + '.atb',))
                     x.start()
 
             else:
@@ -350,18 +357,18 @@ class Container(BoxLayout):
 
     def load_book(self, path):
         self.import_atb(path, False)
-        self.make_atb()
+        #self.make_mapping()
 
     def update_bar(self, dt):
         self.mutex.acquire()
-        self.loading_label.text = 'Sync: ' + str(self.progress) + '%'
+        self.loading_label.text = 'Sync: ' + str(self.atb_model.get_len_word_sec()) + '%'
         self.mutex.release()
 
-    def make_atb(self):
+    def make_mapping(self):
         self.event2 = Clock.schedule_interval(self.update_bar, 0.1)
-        for i in range(100):
-            self.progress += 1
-            time.sleep(0.2)
+
+        self.atb_model.make_mapping()
+
         self.event2.cancel()
         self.loading_label.size_hint = [0.1, 1]
         self.spinner.active = False
@@ -390,6 +397,8 @@ class Container(BoxLayout):
 
         self.move_slider()
         self.cur_ref = 0
+        
+
         if flag:
             self.loading_label.size_hint = [0.1, 1]
             self.loading_label.text = "Done!"

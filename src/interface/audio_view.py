@@ -12,8 +12,9 @@ class AudioView:
         self.audio_file = self.Music(self.play_list[0])
         self.cur_volume = cur_volume
         self.time_label = time_label
-        self.audio_file.sound.volume = self.cur_volume / 100
         self.cur_audio = 0
+        self.audio_file.sound.volume = self.cur_volume / 100
+
         self.audio_len = ""
         self.time_label.text = self.get_audio_len()
         self.is_play = False
@@ -41,18 +42,20 @@ class AudioView:
 
     def next_audio(self):
         if self.cur_audio + 1 < len(self.play_list):
-            self.cur_audio += 1
             if self.audio_file.sound.on_play:
                 self.audio_file.sound.stop()
+            self.audio_file.sound.unload()
+            self.cur_audio += 1
             self.audio_file = self.Music(self.play_list[self.cur_audio])
             self.time_label.text = self.get_audio_len()
             self.slider.value = 0
 
     def prev_audio(self):
         if self.cur_audio - 1 >= 0:
-            self.cur_audio -= 1
             if self.audio_file.sound.on_play:
                 self.audio_file.sound.stop()
+            self.audio_file.sound.unload()
+            self.cur_audio -= 1
             self.audio_file = self.Music(self.play_list[self.cur_audio])
             self.time_label.text = self.get_audio_len()
 
