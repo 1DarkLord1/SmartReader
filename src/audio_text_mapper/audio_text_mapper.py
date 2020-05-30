@@ -22,12 +22,14 @@ class ATMapper:
         self.prev_dur = None
         self.start = None
 
+
     def recognize_all(self):
         chunk_time = 15
         audio_num = 0
         for dur, audio_path in zip(self.mdl.durs, self.mdl.wav_list):
             self.recognize(audio_path, audio_num, dur, chunk_time)
             audio_num += 1
+
 
     def get_startp(self, audio_path, audio_num, chunk_time):
         rec = sr.Recognizer()
@@ -60,8 +62,8 @@ class ATMapper:
             self.write_mapinfo(audio_num, segment_markup)
             return end
 
+
     def recognize(self, audio_path, audio_num, dur, chunk_time):
-        print(audio_num)
         self.startp = self.get_startp(audio_path, audio_num, chunk_time)
         # div_coef = 2
         # pow_coef = 1 / 3
@@ -114,16 +116,18 @@ class ATMapper:
                                           self.last_chunk.tstart, dur)
                 self.write_mapinfo(audio_num, markup)
 
+
     def average_metrics(self, chunk, text_words):
         return mean([distance(chunk_word, text_word) for chunk_word, text_word in zip(chunk, text_words)])
+
 
     def chunk_search(self, chunk, startp, endp):
         endp = endp - len(chunk) + 1
         matches = [(i, self.average_metrics(chunk, self.mdl.word_list[i:i + len(chunk)])) for i in range(startp, endp)]
         return min(matches, key=lambda match: match[1])[0]
 
+
     def map_segment(self, start_pos, end_pos, start_time, end_time):
-        print(start_pos, end_pos, ' : ', start_time, end_time)
         dur = end_time - start_time
         syll_cnt = [0]
         symbs = {'а', 'о', 'е', 'и', 'ы', 'у', 'э', 'ё', 'я', 'ю', '.', '?', '!'}
@@ -134,23 +138,21 @@ class ATMapper:
         return [self.Markup(word_num, start_time + (dur / syll_cnt[-1]) * syll_cnt[word_num - start_pos]) for word_num
                 in range(start_pos, end_pos)]
 
+
     def chunk_find(self, chunk, startp):
-        deep_coef = 0.5
-        endp = min(startp + math.ceil(len(self.mdl.word_list) * deep_coef), len(self.mdl.word_list))
-        chunk_pos = self.chunk_search(chunk.text, startp, endp)
+        chunk_pos = self.chunk_search(chunk.text, startp, len(self.mdl.word_list))
         return chunk_pos
+
 
     def make_mapping(self, chunk, audio_num, dur, endt):
         chunk_pos = self.chunk_find(chunk, self.startp)
-        segment_markup = None
-
         segment_markup = self.map_segment(self.startp, chunk_pos, self.last_chunk.tstart, chunk.tstart)
         if endt != dur:
             self.startp = chunk_pos
-
         self.last_chunk = chunk
         self.prev_chunk_pos = chunk_pos
         self.write_mapinfo(audio_num, segment_markup)
+
 
     def write_mapinfo(self, audio_num, markup):
         self.mdl.mutex.acquire()

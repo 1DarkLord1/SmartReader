@@ -44,6 +44,7 @@ class Model:
 
         self.mutex = threading.Lock()
 
+
     def get_fb2_root(self, fb2_path):
         fb2_path = gen_path(['..', '..', fb2_path])
         fb2_tree = etree.parse(fb2_path, etree.XMLParser(remove_blank_text=True))
@@ -53,6 +54,7 @@ class Model:
         etree.cleanup_namespaces(fb2_root)
         return fb2_root
 
+
     def load_text(self):
         book_path = self.root.find('fb2').text
         fb2_root = self.get_fb2_root(book_path)
@@ -60,27 +62,17 @@ class Model:
         repl_cltag = '#~?$'
         self.text = re.sub('<.*?>', '', re.sub('</.*?>', repl_cltag, raw_text)).replace(repl_cltag, '\n')
 
+
     def make_word_list(self):
-        # self.word_list = [''.join(list(filter(lambda ch: ch.isalpha() or ch == '-' or ch.isdigit(), word))).lower()
-        #                 for word in self.text.split()]
-        # self.word_list = list(filter(lambda word: word != "", self.word_list))
+        self.word_list = [''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
+                         for word in self.text.split()]
+        self.word_list = list(filter(lambda word: word != '', self.word_list))
 
-        word_l = self.text.split()
-        self.word_list = []
-
-        #for i in range(len(word_l)):
-         #   word_l[i] = re.sub('[.,!?:;]', '', word_l[i])
-          #  if len(word_l[i]) == 1 and (ord(word_l[i]) == 8211 or word_l[i] == '-' or ord(word_l[i]) == 8212 or word_l[i] == '*'):
-           #     continue
-            #self.word_list.append(word_l[i].lower())
-        for word in word_l:
-            new_word = ''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
-            if new_word != '':
-                self.word_list.append(new_word)
 
     def parse_audio_list(self):
         audio = self.root.find('audio')
         self.audio_list = [gen_path(['..', '..', file.text]) for file in audio.findall('file')]
+
 
     def load(self, path):
         self.tree = etree.parse(path, etree.XMLParser(remove_blank_text=True))
@@ -91,10 +83,12 @@ class Model:
         self.make_word_list()
         self.parse_audio_list()
 
+
     def create_wav_from_mp3(self, audio_path):
         source = AudioSegment.from_mp3(audio_path)
         source.export(audio_path.replace('mp3', 'wav'), format='wav')
         return int(source.duration_seconds)
+
 
     def make_mapping(self):
         self.durs = []
@@ -115,6 +109,7 @@ class Model:
         with open(mapinfo_path, "wb") as file:
             dill.dump(self.word_sec, file)
 
+
     def load_map(self):
         mapinfo_rel_path = self.root.find('mapinfo').text
         mapinfo_path = gen_path(['..', '..', mapinfo_rel_path])
@@ -133,6 +128,7 @@ class Model:
             self.seconds[audio_num].append(sec)
         self.seconds = [sorted(cur_secs) for cur_secs in self.seconds]
 
+
     def import_book(self, book_path, audio_paths):
         book_name = book_path.split('/')[-1].replace('.fb2', '')
         folder_path = gen_path(['..', '..', self.root_name, book_name])
@@ -146,6 +142,7 @@ class Model:
         rel_book_path = os.path.join(rel_folder_path, book_name + '.fb2')
         rel_audio_paths = [os.path.join(rel_folder_path, path.split('/')[-1]) for path in audio_paths]
         self.make_atb(rel_book_path, book_name, rel_audio_paths, rel_folder_path, folder_path)
+
 
     def make_atb(self, book_path, book_name, audio_paths, rel_folder_path, folder_path):
         atb_root = etree.Element('atb')
@@ -162,23 +159,26 @@ class Model:
         atb_tree.write(os.path.join(folder_path, book_name + '_data' + '.atb'), pretty_print=True, xml_declaration=True,
                        encoding='utf-8')
 
+
     def get_audio_list(self):
         return self.audio_list
 
+
     def get_text(self):
         return self.text
+
 
     def get_word_list(self):
         return self.word_list
 
     def get_sec(self, word):
         self.mutex.acquire()
+        sec = None
         if self.word_sec:
             sec = self.word_sec.get(word, None)
-        else:
-            sec = None
         self.mutex.release()
         return sec
+
 
     def get_word(self, audio_num, sec):
         self.mutex.acquire()
@@ -195,11 +195,11 @@ class Model:
         self.mutex.release()
         return word
 
+
     def get_len_word_sec(self):
         self.mutex.acquire()
+        res = 0
         if self.word_sec:
             res = round(len(self.word_sec) / len(self.word_list) * 100, 1)
-        else:
-            res = 0
         self.mutex.release()
         return res
