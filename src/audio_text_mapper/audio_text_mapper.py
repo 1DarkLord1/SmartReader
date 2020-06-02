@@ -12,109 +12,77 @@ import math
 class ATMapper:
     def __init__(self, atb_mdl):
         self.mdl = atb_mdl
-        self.Chunk = namedtuple('Chunk', ['text', 'tstart'])
+        self.Chunk = namedtuple('Chunk', ['text', 'tstart', 'pos'])
         self.Time = namedtuple('Time', ['audio_num', 'sec'])
         self.Markup = namedtuple('Markup', ['word_num', 'sec'])
         self.startp = 0
-        self.last_chunk = self.Chunk('', 0)
+        self.last_chunk = self.Chunk([], 0, None)
         self.last_inv_speed = 0.4
-        self.prev_chunk_pos = None
-        self.prev_dur = None
-        self.start = None
 
 
-    def recognize_all(self):
+    def handle_end(self, audio_num, endp):
+        if self.last_chunk.pos:
+            self.write_mapinfo(audio_num, self.map_segment(self.last_chunk.pos, endp, self.last_chunk.tstart, self.durs[audio_num]))
+
+
+    def map_all(self):
         chunk_time = 15
         audio_num = 0
         for dur, audio_path in zip(self.mdl.durs, self.mdl.wav_list):
-            self.recognize(audio_path, audio_num, dur, chunk_time)
+            self.make_mapping(audio_path, audio_num, dur, chunk_time)
             audio_num += 1
+        self.handle_end(-1, len(self.mdl.word_list))
 
 
-    def get_startp(self, audio_path, audio_num, chunk_time):
+    def get_chunk(self, recognized, start_pos):
+        chunk_words = [''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
+                        for word in recognized.split()]
+        chunk_words = list(filter(lambda word: word != '', chunk_words))
+        recognized_chunk = self.Chunk(chunk_words, start_time)
+        recognized_chunk.pos = self.chunk_find(recognized_chunk.text, start_pos)
+        return recognized_chunk
+
+
+    def handle_start(self, audio_path, audio_num, chunk_time):
         rec = sr.Recognizer()
         audio = sr.AudioFile(audio_path)
         start_time = 0
+        recognized = ''
         with audio as source:
+            rec.adjust_for_ambient_noise(source)
             recorded = rec.record(source, duration=chunk_time)
-            recognized = ''
             try:
                 recognized = rec.recognize_google(recorded, language='ru-RU')
             except Exception as e:
-                pass
-
-            #chunk_words = list(map(lambda word: word.lower(), recognized.split(' ')))
-
-            word_l = recognized.split()
-            chunk_words = []
-            for word in word_l:
-                new_word = ''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
-                if new_word != '':
-                    chunk_words.append(new_word)
-
-            # print(chunk_words)
-
-            recognized_chunk = self.Chunk(chunk_words, start_time)
-
-            self.start = self.chunk_find(recognized_chunk, self.startp)
-            end = self.start + len(recognized_chunk.text)
-            segment_markup = self.map_segment(self.start, end, 0, chunk_time)
-            self.write_mapinfo(audio_num, segment_markup)
-            return end
+                return
+        chunk = self.get_chunk(recognized, self.startp)
+        self.write_mapinfo(audio_num, self.map_segment(chunk.pos, chunk.pos + len(chunk), chunk.tstart, chunk.tstart + chunk_time))
+        return chunk.pos, chunk.pos + len(chunk)
 
 
-    def recognize(self, audio_path, audio_num, dur, chunk_time):
-        self.startp = self.get_startp(audio_path, audio_num, chunk_time)
-        # div_coef = 2
-        # pow_coef = 1 / 3
-        # segm_count = math.ceil(dur ** pow_coef / div_coef)
-        # fix issue with audio optimal segmentation
-
-        if self.prev_chunk_pos:
-            segment_markup = self.map_segment(self.prev_chunk_pos, self.start, self.last_chunk.tstart, self.prev_dur)
-            self.write_mapinfo(audio_num - 1, segment_markup)
-
-        self.prev_dur = dur
-
-        segm_count = math.ceil(dur / 180)
+    def make_mapping(self, audio_path, audio_num, dur, chunk_time):
+        start_chunk_pos, self.startp = self.handle_start(audio_path, audio_num, chunk_time)
+        self.handle_end(audio_num - 1, start_chunk_pos)
+        self.last_chunk = self.Chunk([], chunk_time, start_chunk_pos)
+        div_coef = 2
+        pow_coef = 1 / 3
+        segm_count = math.ceil(dur ** pow_coef / div_coef)
         fragm_step = math.floor(dur / segm_count)
         rec = sr.Recognizer()
         audio = sr.AudioFile(audio_path)
-        last_failed = False
-        self.last_chunk = self.Chunk('', chunk_time)
         with audio as source:
             rec.adjust_for_ambient_noise(source)
             for time in range(fragm_step, dur + 1, fragm_step):
-                #if abs(dur - time) < fragm_step:
-                 #   time = dur
-                start_time = time - chunk_time
-
                 recorded = rec.record(source, offset=fragm_step - chunk_time, duration=chunk_time)
                 recognized = ''
                 try:
                     recognized = rec.recognize_google(recorded, language='ru-RU')
                 except Exception as e:
-                    if time == dur:
-                        last_failed = True
-                    continue
-                #chunk_words = list(map(lambda word: word.lower(), recognized.split(' ')))
-
-                word_l = recognized.split()
-                chunk_words = []
-                for word in word_l:
-                    new_word = ''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
-                    if new_word != '':
-                        chunk_words.append(new_word)
-
-                # print(chunk_words)
-                recognized_chunk = self.Chunk(chunk_words, start_time)
-                self.make_mapping(recognized_chunk, audio_num, dur, time)
-
-            if last_failed:
-                segm_dur = dur - self.last_chunk.tstart
-                markup = self.map_segment(self.startp, math.ceil(self.startp + segm_dur * self.last_inv_speed),
-                                          self.last_chunk.tstart, dur)
-                self.write_mapinfo(audio_num, markup)
+                    pass
+                chunk = self.get_chunk(recognized, self.startp)
+                segment_markup = self.map_segment(self.startp, chunk.pos, self.last_chunk.tstart, chunk.tstart)
+                self.last_chunk = chunk
+                self.write_mapinfo(audio_num, segment_markup)
 
 
     def average_metrics(self, chunk, text_words):
@@ -140,18 +108,7 @@ class ATMapper:
 
 
     def chunk_find(self, chunk, startp):
-        chunk_pos = self.chunk_search(chunk.text, startp, len(self.mdl.word_list))
-        return chunk_pos
-
-
-    def make_mapping(self, chunk, audio_num, dur, endt):
-        chunk_pos = self.chunk_find(chunk, self.startp)
-        segment_markup = self.map_segment(self.startp, chunk_pos, self.last_chunk.tstart, chunk.tstart)
-        if endt != dur:
-            self.startp = chunk_pos
-        self.last_chunk = chunk
-        self.prev_chunk_pos = chunk_pos
-        self.write_mapinfo(audio_num, segment_markup)
+        return self.chunk_search(chunk, startp, len(self.mdl.word_list))
 
 
     def write_mapinfo(self, audio_num, markup):
