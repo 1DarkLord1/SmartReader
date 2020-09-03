@@ -53,8 +53,9 @@ python3 src/main.py
 ```
 
 ### Contributors
-* Alexander Grebenshchikov
 * Denil Sharipov
+* Alexander Grebenshchikov
+* Evgeny Linsky
 
 <!-- CONTACT -->
 ### Contacts
