@@ -1,6 +1,8 @@
 # SmartReader
 ### Textbook and audiobook in the one bottle
 
+### WARNING
+Tests need to be remade so don't run them
 
 <!-- TABLE OF CONTENTS -->
 ### Table of Contents
