@@ -63,4 +63,4 @@ python3 src/main.py
 ### Contacts
 Denil Sharipov - [https://devfolio.co/@Dword](https://devfolio.co/@Dword) - dword31415@gmail.com
 
-Project Link: [https://github.com/1DarkLord1/ExplainMe](https://github.com/1DarkLord1/ExplainMe)
+Project Link: [https://github.com/1DarkLord1/ExplainMe](https://github.com/1DarkLord1/SmartReader)
