@@ -2,7 +2,7 @@
 ### Textbook and audiobook in the one bottle
 
 ### WARNING
-1. It's not recommended using books with translator's preamble or epilogue 
+1. It's not recommended using books with translator's preamble or epilogue. If you use that books, make sure that the audio and the text versions are similar.
 2. Tests need to be remade so don't run them
 
 <!-- TABLE OF CONTENTS -->
