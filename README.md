@@ -2,7 +2,8 @@
 ### Textbook and audiobook in the one bottle
 
 ### WARNING
-Tests need to be remade so don't run them
+1. It's not recommended using books with translator preamble or epilogue 
+2. Tests need to be remade so don't run them
 
 <!-- TABLE OF CONTENTS -->
 ### Table of Contents
