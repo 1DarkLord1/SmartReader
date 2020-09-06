@@ -27,7 +27,7 @@ import logging
 class Model:
     def __init__(self, file=False):
         if file == True:
-            logging.basicConfig(filename=gen_path('..', '..', 'logs', 'logs.txt'), filemode='w'))
+            logging.basicConfig(filename=gen_path(['..', '..', 'logs', 'logs.txt']), filemode='w')
         else:
             logging.basicConfig(level=logging.INFO)
 
@@ -71,7 +71,7 @@ class Model:
 
 
     def make_word_list(self):
-        logging_info('make_word_list()\n')
+        logging.info('make_word_list()\n')
         self.word_list = [''.join(list(filter(lambda ch: ch.isalpha() or ch.isdigit(), word))).lower()
                          for word in self.text.split()]
         self.word_list = list(filter(lambda word: word != '', self.word_list))

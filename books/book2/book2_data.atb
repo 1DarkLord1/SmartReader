@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<atb>
+  <fb2>books/book2/book2.fb2</fb2>
+  <audio>
+    <file>books/book2/book2.mp3</file>
+  </audio>
+  <mapinfo>books/book2/mapinfo_book2.dat</mapinfo>
+</atb>

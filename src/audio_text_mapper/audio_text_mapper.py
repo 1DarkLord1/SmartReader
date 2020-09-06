@@ -7,6 +7,7 @@ from Levenshtein import distance
 import threading
 from numpy import linalg
 import math
+import logging
 
 
 class ATMapper:
@@ -17,6 +18,9 @@ class ATMapper:
         self.Markup = namedtuple('Markup', ['word_num', 'sec'])
         self.startp = 0
         self.last_chunk = self.Chunk([], 0, None)
+        self.div_coef = div_coef
+        self.pow_coef = pow_coef
+        self.last_inv_speed = last_inv_speed
 
 
     def handle_end(self, audio_num, endp):
@@ -67,9 +71,9 @@ class ATMapper:
         start_chunk_pos, self.startp = self.handle_start(audio_path, audio_num, chunk_time)
         self.handle_end(audio_num - 1, start_chunk_pos)
         self.last_chunk = self.Chunk([], chunk_time, start_chunk_pos)
-        segm_count = math.ceil(dur ** pow_coef / div_coef)
+        segm_count = math.ceil(dur ** self.pow_coef / self.div_coef)
         fragm_step = math.floor(dur / segm_count)
-        logging.info('fragm_step: {}, fragm_count: {}\n'.format(fragm_step, fragm_count))
+        logging.info('fragm_step: {}, fragm_count: {}\n'.format(fragm_step, segm_count))
         rec = sr.Recognizer()
         audio = sr.AudioFile(audio_path)
         with audio as source:
@@ -89,7 +93,7 @@ class ATMapper:
         if audio_num == len(self.mdl.audio_list) - 1 and abs(len(self.mdl.word_list) - (self.last_chunk.tstart + chunk_time)) < fragm_step:
             self.handle_end(len(self.mdl.audio_list) - 1, len(self.mdl.word_list))
         else:
-            self.write_mapinfo(audio_num, self.map_segment(self.startp, math.floor(self.last_chunk.pos + last_inv_speed * (dur - self.last_chunk.tstart)),
+            self.write_mapinfo(audio_num, self.map_segment(self.startp, math.floor(self.last_chunk.pos + self.last_inv_speed * (dur - self.last_chunk.tstart)),
             self.last_chunk.tstart, dur))
 
 
@@ -113,8 +117,8 @@ class ATMapper:
         for word_num in range(start_pos, end_pos):
             word = self.mdl.word_list[word_num]
             syll_cnt.append(syll_cnt[-1] + sum(1 if ch[1] in symbs else 0 for ch in enumerate(word)))
-        last_inv_speed = (end_pos - start_pos) / dur
-        logging.info('Last inv speed: {}\n'.format(last_inv_speed))
+        self.last_inv_speed = (end_pos - start_pos) / dur
+        logging.info('Last inv speed: {}\n'.format(self.last_inv_speed))
         return [self.Markup(word_num, start_time + (dur / syll_cnt[-1]) * syll_cnt[word_num - start_pos]) for word_num
                 in range(start_pos, end_pos)]
 
