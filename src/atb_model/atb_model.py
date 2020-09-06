@@ -96,12 +96,12 @@ class Model:
             self.durs.append(self.create_wav_from_mp3(audio))
 
         self.wav_list = list(map(lambda audio_path: audio_path.replace('mp3', 'wav'), self.audio_list))
-        mapper = ATMapper(self)
+        mapper = ATMapper(atb_mdl=self, last_inv_speed=0.4, div_coef=2.5, pow_coef=1/3)
 
         self.word_sec = {}
         self.sec_word = [{} for i in range(len(self.audio_list))]
         self.seconds = [[] for i in range(len(self.audio_list))]
-        mapper.recognize_all()
+        mapper.map_all()
 
         for wav_audio in self.wav_list:
             os.remove(wav_audio)
